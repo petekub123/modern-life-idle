@@ -94,6 +94,9 @@ class Game {
         this.jobSystem.tick();
         this.eventSystem.tick();
 
+        // Stock market updates every 15 minutes
+        this.stockSystem.tick(this.timeSystem.gameTime);
+
         // Check for new day
         if (this.timeSystem.checkDayAdvanced()) {
             this.processDailyExpenses();

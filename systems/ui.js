@@ -739,7 +739,7 @@ export class UIManager {
                 </strong>
             </div>
             <div style="font-size:0.8rem; color:#888; margin-top:8px;">
-                🏦 เงินในบัญชี: ${Math.floor(bank.balance).toLocaleString()}฿ (ซื้อขายผ่านธนาคาร)
+                🏦 เงินในบัญชี: ${Math.floor(bank.balance).toLocaleString()}฿ | ราคาอัพเดททุก 15 นาที
             </div>
         `;
 
@@ -748,35 +748,49 @@ export class UIManager {
 
         stocks.forEach(s => {
             const item = document.createElement('div');
-            item.className = 'job-item-btn';
-            item.style.flexDirection = 'column';
-            item.style.alignItems = 'stretch';
-            item.style.gap = '8px';
+            item.className = 'stock-card';
 
             const hasShares = s.shares > 0;
             const plColor = s.profitLoss >= 0 ? 'var(--success)' : 'var(--stress)';
+            const trendIcon = s.trend === 'up' ? '📈' : s.trend === 'down' ? '📉' : '➖';
+            const trendColor = s.trend === 'up' ? 'var(--success)' : s.trend === 'down' ? 'var(--stress)' : 'var(--text-secondary)';
+            const changeText = s.priceChange >= 0 ? `+${s.priceChange.toFixed(1)}%` : `${s.priceChange.toFixed(1)}%`;
+
+            // Generate SVG sparkline
+            const sparkline = this.generateSparkline(s.priceHistory, s.trend);
 
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <span style="font-size:1.2rem;">${s.icon}</span>
-                        <strong style="margin-left:6px;">${s.name}</strong>
-                        <span style="color:var(--text-secondary); font-size:0.8rem;">${s.id}</span>
+                <div class="stock-header">
+                    <div class="stock-info">
+                        <span style="font-size:1.3rem;">${s.icon}</span>
+                        <div>
+                            <strong>${s.name}</strong>
+                            <span style="color:var(--text-secondary); font-size:0.75rem; margin-left:4px;">${s.id}</span>
+                        </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="color:var(--accent); font-weight:bold;">${s.currentPrice.toFixed(2)}฿</div>
-                        ${s.dividendRate > 0 ? `<div style="font-size:0.75rem; color:var(--success);">ปันผล ${(s.dividendRate * 100).toFixed(1)}%/วัน</div>` : ''}
+                    <div class="stock-price">
+                        <div style="font-size:1.1rem; font-weight:bold; color:var(--accent);">${s.currentPrice.toFixed(2)}฿</div>
+                        <div style="font-size:0.75rem; color:${trendColor};">${trendIcon} ${changeText}</div>
                     </div>
                 </div>
+                
+                <div class="stock-chart">
+                    ${sparkline}
+                </div>
+                
+                ${s.dividendRate > 0 ? `<div style="font-size:0.75rem; color:var(--success); margin-bottom:6px;">💰 ปันผล ${(s.dividendRate * 100).toFixed(1)}%/วัน</div>` : ''}
+                
                 ${hasShares ? `
-                    <div style="font-size:0.85rem; color:#aaa;">
-                        ถือ ${s.shares} หุ้น | มูลค่า ${Math.floor(s.value).toLocaleString()}฿ | 
+                    <div class="stock-holding">
+                        <span>ถือ ${s.shares} หุ้น</span>
+                        <span>ต้นทุน ${s.avgCost.toFixed(2)}฿</span>
                         <span style="color:${plColor};">${s.profitLoss >= 0 ? '+' : ''}${Math.floor(s.profitLoss)}฿</span>
                     </div>
                 ` : ''}
-                <div style="display:flex; gap:8px;">
-                    <button class="housing-btn buy-btn" data-action="buy" data-id="${s.id}">🟢 ซื้อ</button>
-                    ${hasShares ? `<button class="housing-btn rent-btn" data-action="sell" data-id="${s.id}">🟡 ขาย</button>` : ''}
+                
+                <div class="stock-actions">
+                    <button class="stock-btn buy" data-action="buy" data-id="${s.id}">🟢 ซื้อ</button>
+                    ${hasShares ? `<button class="stock-btn sell" data-action="sell" data-id="${s.id}">🟡 ขาย</button>` : ''}
                 </div>
             `;
 
@@ -792,7 +806,7 @@ export class UIManager {
 
                     if (action === 'buy') {
                         const maxShares = Math.floor(bank.balance / price);
-                        const shares = parseInt(prompt(`ซื้อกี่หุ้น? (ราคา ${price}฿, ซื้อได้สูงสุด ${maxShares} หุ้น)`, '1'));
+                        const shares = parseInt(prompt(`ซื้อกี่หุ้น? (ราคา ${price.toFixed(2)}฿, ซื้อได้สูงสุด ${maxShares} หุ้น)`, '1'));
                         if (shares && shares > 0) {
                             stock.buy(id, shares);
                             this.renderStocks();
@@ -812,6 +826,40 @@ export class UIManager {
 
             listEl.appendChild(item);
         });
+    }
+
+    // Generate SVG sparkline for price history
+    generateSparkline(history, trend) {
+        if (!history || history.length < 2) {
+            return '<div style="height:40px; display:flex; align-items:center; justify-content:center; color:#666; font-size:0.7rem;">รอข้อมูล...</div>';
+        }
+
+        const width = 200;
+        const height = 40;
+        const padding = 2;
+
+        const min = Math.min(...history);
+        const max = Math.max(...history);
+        const range = max - min || 1;
+
+        const points = history.map((price, i) => {
+            const x = padding + (i / (history.length - 1)) * (width - padding * 2);
+            const y = height - padding - ((price - min) / range) * (height - padding * 2);
+            return `${x},${y}`;
+        }).join(' ');
+
+        const lineColor = trend === 'up' ? '#34d399' : trend === 'down' ? '#ef4444' : '#888';
+        const fillColor = trend === 'up' ? 'rgba(52,211,153,0.1)' : trend === 'down' ? 'rgba(239,68,68,0.1)' : 'rgba(136,136,136,0.1)';
+
+        // Create fill polygon
+        const fillPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
+
+        return `
+            <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                <polygon points="${fillPoints}" fill="${fillColor}"/>
+                <polyline points="${points}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
     }
 
     // ===================== MAP NAVIGATION =====================
