@@ -278,8 +278,25 @@ export class UIManager {
         this.els.jobIncome.textContent = `รายได้: ${currentJob.incomePerSec} ฿/วิ`; // Fix: incomePerSec
 
         if (this.game.jobSystem.isWorking) {
-            this.els.workStatus.textContent = "กำลังทำงาน... (คลิกงานอื่นเพื่อเปลี่ยน)";
-            this.els.workStatus.style.color = "#4ecca3";
+            let statusText = "กำลังทำงาน...";
+            let penalties = [];
+
+            // Show penalties
+            if (this.game.player.stress > 80) {
+                penalties.push("🔥 เครียด -50%");
+            }
+            if (this.game.player.isUnhealthy && this.game.player.isUnhealthy()) {
+                penalties.push("🤒 ป่วย -30%");
+            }
+
+            if (penalties.length > 0) {
+                statusText = `ทำงานอยู่ (${penalties.join(', ')})`;
+                this.els.workStatus.style.color = "#fbbf24";
+            } else {
+                statusText = "กำลังทำงาน... (คลิกงานอื่นเพื่อเปลี่ยน)";
+                this.els.workStatus.style.color = "#4ecca3";
+            }
+            this.els.workStatus.textContent = statusText;
         } else {
             if (currentJob.id !== 'unemployed') {
                 this.els.workStatus.textContent = "หยุดทำงาน (พลังงานหมด!)";

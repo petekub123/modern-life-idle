@@ -73,6 +73,11 @@ export class JobSystem {
                 income *= 0.5;
             }
 
+            // Health Penalty: If health < 30, income reduced by 30% (sick)
+            if (this.player.isUnhealthy && this.player.isUnhealthy()) {
+                income *= 0.7;
+            }
+
             this.player.addMoney(income);
 
             // Progress visual only for now, since it's continuous income
