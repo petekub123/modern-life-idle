@@ -163,21 +163,50 @@ export class AIService {
         }
     }
 
-    // Test API by "calling a friend"
+    // Test API by "calling a friend" - Thai Gen-Z style
     async callFriend() {
         if (!CONFIG.AI_API_KEY) {
-            return { success: false, error: "NO_API_KEY", message: "ยังไม่ได้ตั้งค่า API Key" };
+            return { success: false, error: "NO_API_KEY", message: "ยังไม่ได้ตั้งค่า API Key นะ" };
         }
 
         const player = this.game.player;
+        const job = this.game.jobSystem.currentJob?.name || "ว่างงาน";
+
+        // Determine player mood based on stats
+        let playerMood = "ปกติ";
+        if (player.stress > 70) playerMood = "เครียดมาก";
+        else if (player.energy < 30) playerMood = "เหนื่อยมาก";
+        else if (player.money > 50000) playerMood = "รวย";
+        else if (player.money < 0) playerMood = "ถังแตก";
+
+        // Thai Gen-Z friend names
+        const friendNames = ["ฟลุ๊ค", "มิ้นท์", "เจมส์", "พลอย", "บิ๊ก", "นิว", "เบล", "ก้อง"];
+        const randomName = friendNames[Math.floor(Math.random() * friendNames.length)];
+
         const prompt = `
-            You are a friendly AI character in a modern life game.
-            The player just called you on the phone. Respond with a short, casual message (1-2 sentences).
-            Be fun, supportive, or give a random life tip.
-            
-            Player status: Money ${player.money}฿, Stress ${player.stress}%, Energy ${player.energy}%
-            
-            Output JSON only: { "name": "friend name", "message": "your message" }
+คุณคือ "${randomName}" เพื่อนสนิทของผู้เล่นในเกม Idle RPG ชีวิตคนเมือง
+ผู้เล่นเพิ่งโทรมาหาคุณ ตอบกลับแบบเพื่อนสนิท วัยรุ่นไทย Gen-Z
+
+สไตล์การพูด:
+- ใช้ภาษาไทยวัยรุ่น เช่น "จ้า", "อ่ะ", "นะ", "ชิมิ", "ป่ะ", "555"
+- พูดสั้นๆ 1-2 ประโยค
+- ใส่ emoji 1-2 ตัว
+- ห้ามใช้ภาษาอังกฤษ ยกเว้นคำทับศัพท์
+
+สถานะผู้เล่น:
+- เงิน: ${Math.floor(player.money).toLocaleString()}฿
+- พลังงาน: ${Math.floor(player.energy)}%
+- ความเครียด: ${Math.floor(player.stress)}%
+- อาชีพ: ${job}
+- อารมณ์: ${playerMood}
+
+ตอบตามอารมณ์ผู้เล่น:
+- ถ้าเครียด: ปลอบใจ/ชวนไปเที่ยว
+- ถ้าเหนื่อย: บอกให้พัก
+- ถ้ารวย: ขอยืมตังค์/แซว
+- ถ้าถังแตก: ให้กำลังใจ
+
+Output JSON เท่านั้น: { "name": "${randomName}", "message": "ข้อความ" }
         `;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.AI_MODEL}:generateContent?key=${CONFIG.AI_API_KEY}`;
@@ -188,31 +217,58 @@ export class AIService {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.9 // More creative
+                    }
                 })
             });
 
             if (!response.ok) {
                 const errText = await response.text();
                 console.error("API Response Error:", errText);
+
+                // Parse error for better message
+                if (response.status === 400) {
+                    return { success: false, error: "BAD_REQUEST", message: "API Key ไม่ถูกต้อง หรือ Model ไม่รองรับ" };
+                } else if (response.status === 403) {
+                    return { success: false, error: "FORBIDDEN", message: "API Key ถูกบล็อค หรือหมดโควต้า" };
+                } else if (response.status === 429) {
+                    return { success: false, error: "RATE_LIMIT", message: "เรียกบ่อยไป รอสักครู่นะ" };
+                }
                 return { success: false, error: "API_ERROR", message: `API Error: ${response.status}` };
             }
 
             const data = await response.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
             if (!text) {
-                return { success: false, error: "NO_RESPONSE", message: "AI ไม่ตอบกลับ" };
+                // Fallback response if AI doesn't respond
+                return {
+                    success: true,
+                    name: randomName,
+                    message: "เฮ้ยยย โทรมาไงอ่ะ! 📞 ว่างป่ะ ไปกินข้าวกัน~"
+                };
             }
 
-            const result = JSON.parse(text);
-            return {
-                success: true,
-                name: result.name || "เพื่อน",
-                message: result.message || "สวัสดี!"
-            };
+            try {
+                const result = JSON.parse(text);
+                return {
+                    success: true,
+                    name: result.name || randomName,
+                    message: result.message || "ว่าไงจ้า! 😊"
+                };
+            } catch (parseError) {
+                // If JSON parse fails, use the text directly
+                return {
+                    success: true,
+                    name: randomName,
+                    message: text.slice(0, 100) || "เฮ้ย ว่าไงอ่ะ! 👋"
+                };
+            }
         } catch (error) {
             console.error("AI Call Friend Error:", error);
-            return { success: false, error: "EXCEPTION", message: error.message };
+            return { success: false, error: "NETWORK", message: "เน็ตมีปัญหา ลองใหม่นะ" };
         }
     }
 }
