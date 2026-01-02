@@ -37,6 +37,8 @@ export class UIManager {
         this.renderSkills();
         this.renderCourses();
         this.renderHousing();
+        this.renderBank();
+        this.renderStocks();
     }
 
     bindEvents() {
@@ -635,5 +637,169 @@ export class UIManager {
             listContainer.appendChild(btn);
         });
     }
-}
 
+    renderBank() {
+        const infoEl = document.getElementById('bank-info');
+        const actionsEl = document.getElementById('bank-actions');
+        if (!infoEl || !actionsEl) return;
+
+        const bank = this.game.bankSystem;
+        const balance = Math.floor(bank.balance);
+        const loan = Math.floor(bank.loan);
+        const loanLimit = bank.getLoanLimit();
+        const available = bank.getAvailableLoan();
+
+        infoEl.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span>💰 ยอดเงินฝาก:</span>
+                <strong style="color:var(--success);">${balance.toLocaleString()}฿</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span>💳 หนี้สินคงค้าง:</span>
+                <strong style="color:${loan > 0 ? 'var(--stress)' : 'var(--text-secondary)'};">${loan.toLocaleString()}฿</strong>
+            </div>
+            <div style="font-size:0.8rem; color:#888;">
+                วงเงินกู้: ${loanLimit.toLocaleString()}฿ | กู้ได้อีก: ${available.toLocaleString()}฿
+            </div>
+        `;
+
+        actionsEl.innerHTML = `
+            <button class="small-btn" id="btn-deposit">🟢 ฝากเงิน</button>
+            <button class="small-btn" id="btn-withdraw">🟡 ถอนเงิน</button>
+            <button class="small-btn" id="btn-loan" ${available === 0 ? 'disabled style="opacity:0.5"' : ''}>💳 กู้เงิน</button>
+            <button class="small-btn" id="btn-repay" ${loan === 0 ? 'disabled style="opacity:0.5"' : ''}>✅ ชำระหนี้</button>
+        `;
+
+        // Add event listeners
+        document.getElementById('btn-deposit')?.addEventListener('click', () => {
+            const amount = parseInt(prompt('ฝากเงินเท่าไหร่?', '1000'));
+            if (amount && amount > 0) {
+                bank.deposit(amount);
+                this.renderBank();
+            }
+        });
+
+        document.getElementById('btn-withdraw')?.addEventListener('click', () => {
+            const amount = parseInt(prompt('ถอนเงินเท่าไหร่?', '1000'));
+            if (amount && amount > 0) {
+                bank.withdraw(amount);
+                this.renderBank();
+            }
+        });
+
+        document.getElementById('btn-loan')?.addEventListener('click', () => {
+            const max = bank.getAvailableLoan();
+            const amount = parseInt(prompt(`กู้เงินเท่าไหร่? (สูงสุด ${max}฿)`, String(max)));
+            if (amount && amount > 0) {
+                bank.takeLoan(amount);
+                this.renderBank();
+            }
+        });
+
+        document.getElementById('btn-repay')?.addEventListener('click', () => {
+            const owed = Math.floor(bank.loan);
+            const amount = parseInt(prompt(`ชำระหนี้เท่าไหร่? (หนี้คงค้าง ${owed}฿)`, String(owed)));
+            if (amount && amount > 0) {
+                bank.repayLoan(amount);
+                this.renderBank();
+            }
+        });
+    }
+
+    renderStocks() {
+        const infoEl = document.getElementById('portfolio-info');
+        const listEl = document.getElementById('stock-list');
+        if (!infoEl || !listEl) return;
+
+        const stock = this.game.stockSystem;
+        const bank = this.game.bankSystem;
+        const portfolioValue = stock.getPortfolioValue();
+        const profitLoss = stock.getPortfolioProfitLoss();
+
+        infoEl.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span>💼 มูลค่า Portfolio:</span>
+                <strong style="color:var(--accent);">${portfolioValue.toLocaleString()}฿</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>📈 กำไร/ขาดทุน:</span>
+                <strong style="color:${profitLoss >= 0 ? 'var(--success)' : 'var(--stress)'};">
+                    ${profitLoss >= 0 ? '+' : ''}${profitLoss.toLocaleString()}฿
+                </strong>
+            </div>
+            <div style="font-size:0.8rem; color:#888; margin-top:8px;">
+                🏦 เงินในบัญชี: ${Math.floor(bank.balance).toLocaleString()}฿ (ซื้อขายผ่านธนาคาร)
+            </div>
+        `;
+
+        listEl.innerHTML = '';
+        const stocks = stock.getAllStocksInfo();
+
+        stocks.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'job-item-btn';
+            item.style.flexDirection = 'column';
+            item.style.alignItems = 'stretch';
+            item.style.gap = '8px';
+
+            const hasShares = s.shares > 0;
+            const plColor = s.profitLoss >= 0 ? 'var(--success)' : 'var(--stress)';
+
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-size:1.2rem;">${s.icon}</span>
+                        <strong style="margin-left:6px;">${s.name}</strong>
+                        <span style="color:var(--text-secondary); font-size:0.8rem;">${s.id}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:var(--accent); font-weight:bold;">${s.currentPrice.toFixed(2)}฿</div>
+                        ${s.dividendRate > 0 ? `<div style="font-size:0.75rem; color:var(--success);">ปันผล ${(s.dividendRate * 100).toFixed(1)}%/วัน</div>` : ''}
+                    </div>
+                </div>
+                ${hasShares ? `
+                    <div style="font-size:0.85rem; color:#aaa;">
+                        ถือ ${s.shares} หุ้น | มูลค่า ${Math.floor(s.value).toLocaleString()}฿ | 
+                        <span style="color:${plColor};">${s.profitLoss >= 0 ? '+' : ''}${Math.floor(s.profitLoss)}฿</span>
+                    </div>
+                ` : ''}
+                <div style="display:flex; gap:8px;">
+                    <button class="housing-btn buy-btn" data-action="buy" data-id="${s.id}">🟢 ซื้อ</button>
+                    ${hasShares ? `<button class="housing-btn rent-btn" data-action="sell" data-id="${s.id}">🟡 ขาย</button>` : ''}
+                </div>
+            `;
+
+            // Event listeners
+            item.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    const id = btn.dataset.id;
+                    const price = stock.getPrice(id);
+
+                    this.game.sound?.playClick();
+
+                    if (action === 'buy') {
+                        const maxShares = Math.floor(bank.balance / price);
+                        const shares = parseInt(prompt(`ซื้อกี่หุ้น? (ราคา ${price}฿, ซื้อได้สูงสุด ${maxShares} หุ้น)`, '1'));
+                        if (shares && shares > 0) {
+                            stock.buy(id, shares);
+                            this.renderStocks();
+                            this.renderBank();
+                        }
+                    } else if (action === 'sell') {
+                        const owned = stock.getShares(id);
+                        const shares = parseInt(prompt(`ขายกี่หุ้น? (ถืออยู่ ${owned} หุ้น)`, String(owned)));
+                        if (shares && shares > 0) {
+                            stock.sell(id, shares);
+                            this.renderStocks();
+                            this.renderBank();
+                        }
+                    }
+                });
+            });
+
+            listEl.appendChild(item);
+        });
+    }
+}

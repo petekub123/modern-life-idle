@@ -9,6 +9,8 @@ import { UIManager } from './systems/ui.js';
 import { SoundManager } from './systems/sound.js';
 import { SkillSystem } from './systems/skill.js';
 import { HousingSystem } from './systems/housing.js';
+import { BankSystem } from './systems/bank.js';
+import { StockSystem } from './systems/stock.js';
 
 class Game {
     constructor() {
@@ -21,6 +23,8 @@ class Game {
         this.eventSystem = new EventSystem(this);
         this.skillSystem = new SkillSystem(this);
         this.housingSystem = new HousingSystem(this);
+        this.bankSystem = new BankSystem(this);
+        this.stockSystem = new StockSystem(this);
         this.ui = new UIManager(this);
         this.saveSystem = new SaveSystem(this);
         this.sound = new SoundManager();
@@ -42,6 +46,8 @@ class Game {
             this.inventorySystem.load(savedData.inventory);
             this.skillSystem.load(savedData.skills);
             this.housingSystem.load(savedData.housing);
+            this.bankSystem.load(savedData.bank);
+            this.stockSystem.load(savedData.stocks);
 
             // Calculate offline progress
             const offlineSeconds = this.timeSystem.getOfflineSeconds();
@@ -150,6 +156,13 @@ class Game {
             this.player.modifyStress(20);
             this.ui.log(`⚠️ เงินไม่พอจ่ายค่าครองชีพ! (${expenses} ฿) ความเครียดเพิ่มขึ้น!`);
         }
+
+        // Banking: interest and loan interest
+        this.bankSystem.processDaily();
+
+        // Stocks: update prices and process dividends
+        this.stockSystem.updatePrices();
+        this.stockSystem.processDividends();
 
         // Refresh job list to update unlock status
         this.ui.renderJobList();
