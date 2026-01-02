@@ -134,7 +134,14 @@ export class JobSystem {
         if (this.player.energy >= gig.energy) {
             this.player.modifyEnergy(-gig.energy);
             this.player.modifyStress(gig.stress);
-            this.player.addMoney(gig.pay);
+
+            // Apply skill bonus to gig pay
+            let pay = gig.pay;
+            if (this.player.game && this.player.game.skillSystem) {
+                pay = Math.floor(pay * this.player.game.skillSystem.getSkillIncomeMultiplier());
+            }
+
+            this.player.addMoney(pay);
 
             // Remove gig from available?
             this.availableGigs = this.availableGigs.filter(g => g.id !== gig.id);

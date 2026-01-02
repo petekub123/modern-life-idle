@@ -11,6 +11,7 @@ export class SaveSystem {
             job: this.game.jobSystem.toJSON(),
             inventory: this.game.inventorySystem.toJSON(),
             skills: this.game.skillSystem.toJSON(),
+            housing: this.game.housingSystem.toJSON(),
             timestamp: Date.now()
         };
         try {

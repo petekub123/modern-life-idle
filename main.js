@@ -8,6 +8,7 @@ import { SaveSystem } from './systems/save.js';
 import { UIManager } from './systems/ui.js';
 import { SoundManager } from './systems/sound.js';
 import { SkillSystem } from './systems/skill.js';
+import { HousingSystem } from './systems/housing.js';
 
 class Game {
     constructor() {
@@ -19,6 +20,7 @@ class Game {
         this.inventorySystem = new InventorySystem(this);
         this.eventSystem = new EventSystem(this);
         this.skillSystem = new SkillSystem(this);
+        this.housingSystem = new HousingSystem(this);
         this.ui = new UIManager(this);
         this.saveSystem = new SaveSystem(this);
         this.sound = new SoundManager();
@@ -39,6 +41,7 @@ class Game {
             this.jobSystem.load(savedData.job);
             this.inventorySystem.load(savedData.inventory);
             this.skillSystem.load(savedData.skills);
+            this.housingSystem.load(savedData.housing);
 
             // Calculate offline progress
             const offlineSeconds = this.timeSystem.getOfflineSeconds();
@@ -95,7 +98,7 @@ class Game {
     }
 
     processDailyExpenses() {
-        const expenses = 300; // Fixed for now: Food + Transport + Rent
+        const expenses = this.housingSystem.getDailyExpenses();
         const paid = this.player.spendMoney(expenses);
 
         // Track work days

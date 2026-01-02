@@ -2,6 +2,7 @@ import { JOBS } from '../data/jobs.js';
 import { ACTIVITIES } from '../data/activities.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS, COURSES } from '../data/skills.js';
+import { PROPERTIES } from '../data/properties.js';
 
 export class UIManager {
     constructor(game) {
@@ -35,6 +36,7 @@ export class UIManager {
         this.renderInventory();
         this.renderSkills();
         this.renderCourses();
+        this.renderHousing();
     }
 
     bindEvents() {
@@ -517,4 +519,107 @@ export class UIManager {
             this.game.sound?.playError();
         }
     }
+
+    renderHousing() {
+        const currentContainer = document.getElementById('current-housing');
+        const listContainer = document.getElementById('housing-list');
+        if (!currentContainer || !listContainer) return;
+
+        const housing = this.game.housingSystem;
+        const current = housing.currentProperty;
+        const dailyExpenses = housing.getDailyExpenses();
+
+        // Current housing info
+        currentContainer.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <span style="font-size:1.5rem;">${current.icon}</span>
+                    <strong style="margin-left:8px;">${current.name}</strong>
+                    ${housing.owns(current.id) ? '<span style="color:var(--success); font-size:0.8rem; margin-left:8px;">🏠 เจ้าของ</span>' : ''}
+                </div>
+                <div style="text-align:right;">
+                    <div style="color:var(--stress);">💸 ${dailyExpenses}฿/วัน</div>
+                    <div style="font-size:0.75rem; color:#888;">ค่าครองชีพ + ค่าเช่า</div>
+                </div>
+            </div>
+        `;
+
+        // Housing list
+        listContainer.innerHTML = '';
+        const properties = housing.getAvailableProperties();
+
+        properties.forEach(prop => {
+            if (prop.isCurrent) return; // Skip current
+
+            const btn = document.createElement('div');
+            btn.className = 'job-item-btn';
+            btn.style.flexDirection = 'column';
+            btn.style.alignItems = 'stretch';
+            btn.style.gap = '8px';
+
+            const canRent = prop.canRent && !prop.isCurrent;
+            const canBuy = prop.canBuy;
+            const isOwned = prop.isOwned;
+
+            if (!canRent && !isOwned) {
+                btn.style.opacity = '0.5';
+            }
+
+            let actionsHtml = '';
+            if (isOwned) {
+                actionsHtml = `<button class="housing-btn rent-btn" data-action="move" data-id="${prop.id}">🏠 ย้ายเข้า</button>`;
+            } else {
+                if (canRent) {
+                    actionsHtml += `<button class="housing-btn rent-btn" data-action="rent" data-id="${prop.id}">🔑 เช่า ${prop.rentPerDay}฿/วัน</button>`;
+                }
+                if (prop.buyPrice) {
+                    actionsHtml += `<button class="housing-btn buy-btn ${canBuy ? '' : 'disabled'}" data-action="buy" data-id="${prop.id}" ${canBuy ? '' : 'disabled'}>💰 ซื้อ ${prop.buyPrice.toLocaleString()}฿</button>`;
+                }
+            }
+
+            btn.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-size:1.2rem;">${prop.icon}</span>
+                        <strong style="margin-left:6px;">${prop.name}</strong>
+                        ${isOwned ? '<span style="color:var(--success); font-size:0.7rem; margin-left:6px;">✓ เป็นเจ้าของ</span>' : ''}
+                    </div>
+                    <div style="color:var(--success); font-size:0.8rem;">ลดค่าใช้จ่าย ${Math.round(prop.expenseReduction * 100)}%</div>
+                </div>
+                <div style="font-size:0.8rem; color:#aaa;">${prop.description}</div>
+                <div style="display:flex; gap:8px; font-size:0.75rem; color:#888;">
+                    <span>⚡+${prop.energyBonus} ฟื้นพลัง</span>
+                    <span>😌-${prop.stressReduction} ความเครียด</span>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    ${actionsHtml}
+                </div>
+            `;
+
+            // Event listeners for buttons
+            btn.querySelectorAll('button').forEach(actionBtn => {
+                actionBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = actionBtn.dataset.action;
+                    const id = actionBtn.dataset.id;
+                    this.game.sound?.playClick();
+
+                    if (action === 'rent' || action === 'move') {
+                        if (housing.rent(id)) {
+                            this.renderHousing();
+                        }
+                    } else if (action === 'buy') {
+                        if (housing.buy(id)) {
+                            this.renderHousing();
+                        } else {
+                            this.showToast('เงินไม่พอซื้อ!');
+                        }
+                    }
+                });
+            });
+
+            listContainer.appendChild(btn);
+        });
+    }
 }
+
