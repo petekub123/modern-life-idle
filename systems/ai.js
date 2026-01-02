@@ -126,38 +126,40 @@ export class AIService {
             console.error("AI Jobs Error:", error);
             return [];
         }
-    async generateNews() {
-            if (!CONFIG.AI_API_KEY) return null;
+    }
 
-            const prompt = `
+    async generateNews() {
+        if (!CONFIG.AI_API_KEY) return null;
+
+        const prompt = `
             Generate a single short, funny, or satirical "Breaking News" headline for a fictional modern city.
             Topics: Tech, Economy, traffic, weather, pop culture.
             Max 10 words.
             Output JSON only: { "headline": "..." }
         `;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.AI_MODEL}:generateContent?key=${CONFIG.AI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.AI_MODEL}:generateContent?key=${CONFIG.AI_API_KEY}`;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
 
-                if (!response.ok) return null;
+            if (!response.ok) return null;
 
-                const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!text) return null;
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) return null;
 
-                return JSON.parse(text).headline;
-            } catch (error) {
-                console.error("AI News Error:", error);
-                return null;
-            }
+            return JSON.parse(text).headline;
+        } catch (error) {
+            console.error("AI News Error:", error);
+            return null;
         }
     }
+}
