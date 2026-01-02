@@ -1,5 +1,6 @@
 // systems/stock.js - Stock Market System for Modern Life: Idle RPG
 import { STOCKS, getStockById } from '../data/stocks.js';
+import { MARKET_EVENTS } from '../data/market_events.js';
 
 export class StockSystem {
     constructor(game) {
@@ -14,12 +15,16 @@ export class StockSystem {
         // Player's portfolio: { stockId: { shares: number, avgCost: number } }
         this.portfolio = {};
 
-        // Time tracking for 15-min price updates
+        // Active Market Event
+        this.activeEvent = null;
+        this.eventEndTime = 0;
+
+        // Time tracking
         this.lastUpdateTime = 0;
         this.UPDATE_INTERVAL = 15 * 60; // 15 minutes in seconds
         this.MAX_HISTORY_POINTS = 24;
 
-        // Initialize prices and history
+        // Initialize prices and history (rest same as before)
         Object.keys(STOCKS).forEach(id => {
             this.currentPrices[id] = STOCKS[id].basePrice;
             this.priceHistory[id] = [STOCKS[id].basePrice];
@@ -33,6 +38,8 @@ export class StockSystem {
             this.priceHistory = data.priceHistory || {};
             this.lastUpdateTime = data.lastUpdateTime || 0;
 
+            // Note: Not saving active event state to keep simple, reset on reload is fine
+
             // Ensure all stocks have prices and history
             Object.keys(STOCKS).forEach(id => {
                 if (!this.currentPrices[id]) {
@@ -45,7 +52,7 @@ export class StockSystem {
         }
     }
 
-    // Get current price for a stock
+    // Get current price
     getPrice(stockId) {
         return this.currentPrices[stockId] || STOCKS[stockId]?.basePrice || 0;
     }
@@ -94,9 +101,43 @@ export class StockSystem {
 
     // Check and update prices on interval (called every tick)
     tick(currentGameTime) {
+        // Check event expiration
+        if (this.activeEvent && currentGameTime >= this.eventEndTime) {
+            this.game.ui.log(`📢 ข่าวจบลงแล้ว: ${this.activeEvent.headline} (ตลาดกลับสู่ภาวะปกติ)`);
+            this.activeEvent = null;
+            // Update UI Ticker
+            if (this.game.ui.updateNewsTicker) {
+                this.game.ui.updateNewsTicker(null);
+            }
+        }
+
+        // Randomly trigger event check (every minute)
+        if (currentGameTime % 60 === 0 && !this.activeEvent) {
+            // 5% chance per minute to trigger event
+            if (Math.random() < 0.05) {
+                this.triggerRandomEvent(currentGameTime);
+            }
+        }
+
         if (currentGameTime - this.lastUpdateTime >= this.UPDATE_INTERVAL) {
             this.updatePrices();
             this.lastUpdateTime = currentGameTime;
+        }
+    }
+
+    // Trigger a random market event
+    triggerRandomEvent(currentTime) {
+        const event = MARKET_EVENTS[Math.floor(Math.random() * MARKET_EVENTS.length)];
+        this.activeEvent = event;
+        this.eventEndTime = currentTime + event.duration;
+
+        // Notify UI
+        this.game.ui.log(event.headline);
+        this.game.ui.showToast('📰 ข่าวด่วนตลาดหุ้น! เช็คกระดานข่าว');
+        this.game.sound?.playAlert(); // Re-use alert sound
+
+        if (this.game.ui.updateNewsTicker) {
+            this.game.ui.updateNewsTicker(event);
         }
     }
 
@@ -174,9 +215,22 @@ export class StockSystem {
             const stock = STOCKS[stockId];
             const currentPrice = this.currentPrices[stockId];
 
-            // Random walk with mean reversion
-            const change = (Math.random() - 0.5) * 2 * stock.volatility;
+            // Base Random walk with mean reversion
+            let change = (Math.random() - 0.5) * 2 * stock.volatility;
             const reversion = (stock.basePrice - currentPrice) / stock.basePrice * 0.05;
+
+            // --- Apply Market Event Effect ---
+            if (this.activeEvent) {
+                const event = this.activeEvent;
+                // Check if event targets this stock or ALL
+                if (event.targetStockId === 'ALL' || event.targetStockId === stockId) {
+                    // Apply Trend Bias
+                    change += event.trendBias * (Math.random() * 0.5 + 0.5); // 50-100% of bias
+
+                    // Apply Volatility Multiplier
+                    change *= event.volatilityMul;
+                }
+            }
 
             let newPrice = currentPrice * (1 + change + reversion);
 

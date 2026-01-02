@@ -793,6 +793,19 @@ export class UIManager {
         });
     }
 
+    updateNewsTicker(event) {
+        const ticker = document.getElementById('news-feed');
+        if (!ticker) return;
+
+        if (event) {
+            ticker.innerHTML = `<span style="color:var(--accent); font-weight:bold;">${event.headline}</span>`;
+            ticker.classList.add('breaking-news');
+        } else {
+            ticker.innerHTML = '📰 ตลาดหุ้นเปิดทำการปกติ... ติดตามข่าวสารเร็วๆ นี้';
+            ticker.classList.remove('breaking-news');
+        }
+    }
+
     renderBank() {
         const infoEl = document.getElementById('bank-info');
         const actionsEl = document.getElementById('bank-actions');
@@ -825,9 +838,10 @@ export class UIManager {
             <button class="small-btn" id="btn-repay" ${loan === 0 ? 'disabled style="opacity:0.5"' : ''}>✅ ชำระหนี้</button>
         `;
 
-        // Add event listeners
+        // Add event listeners (With ParseInt Fix)
         document.getElementById('btn-deposit')?.addEventListener('click', () => {
-            const amount = parseInt(prompt('ฝากเงินเท่าไหร่?', '1000'));
+            const input = prompt('ฝากเงินเท่าไหร่?', '1000');
+            const amount = parseInt(input);
             if (amount && amount > 0) {
                 bank.deposit(amount);
                 this.renderBank();
@@ -835,7 +849,8 @@ export class UIManager {
         });
 
         document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-            const amount = parseInt(prompt('ถอนเงินเท่าไหร่?', '1000'));
+            const input = prompt('ถอนเงินเท่าไหร่?', '1000');
+            const amount = parseInt(input);
             if (amount && amount > 0) {
                 bank.withdraw(amount);
                 this.renderBank();
@@ -844,7 +859,8 @@ export class UIManager {
 
         document.getElementById('btn-loan')?.addEventListener('click', () => {
             const max = bank.getAvailableLoan();
-            const amount = parseInt(prompt(`กู้เงินเท่าไหร่? (สูงสุด ${max}฿)`, String(max)));
+            const input = prompt(`กู้เงินเท่าไหร่? (สูงสุด ${max}฿)`, String(max));
+            const amount = parseInt(input);
             if (amount && amount > 0) {
                 bank.takeLoan(amount);
                 this.renderBank();
@@ -853,7 +869,8 @@ export class UIManager {
 
         document.getElementById('btn-repay')?.addEventListener('click', () => {
             const owed = Math.floor(bank.loan);
-            const amount = parseInt(prompt(`ชำระหนี้เท่าไหร่? (หนี้คงค้าง ${owed}฿)`, String(owed)));
+            const input = prompt(`ชำระหนี้เท่าไหร่? (หนี้คงค้าง ${owed}฿)`, String(owed));
+            const amount = parseInt(input);
             if (amount && amount > 0) {
                 bank.repayLoan(amount);
                 this.renderBank();
