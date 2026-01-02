@@ -27,12 +27,19 @@ export class Player {
 
     addMoney(amount) {
         this.stats.money += amount;
+        // Play sound if game reference exists
+        if (this.game && this.game.sound) {
+            this.game.sound.playMoneyGain();
+        }
         return amount; // return actual added
     }
 
     spendMoney(amount) {
         if (this.stats.money >= amount) {
             this.stats.money -= amount;
+            if (this.game && this.game.sound) {
+                this.game.sound.playMoneyLoss();
+            }
             return true;
         }
         return false;

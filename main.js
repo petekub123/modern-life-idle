@@ -6,6 +6,7 @@ import { InventorySystem } from './systems/inventory.js';
 import { EventSystem } from './systems/event.js';
 import { SaveSystem } from './systems/save.js';
 import { UIManager } from './systems/ui.js';
+import { SoundManager } from './systems/sound.js';
 
 class Game {
     constructor() {
@@ -18,6 +19,7 @@ class Game {
         this.eventSystem = new EventSystem(this);
         this.ui = new UIManager(this);
         this.saveSystem = new SaveSystem(this);
+        this.sound = new SoundManager();
 
         this.lastFrameTime = 0;
         this.tickAccumulator = 0;
@@ -43,6 +45,12 @@ class Game {
         }
 
         this.ui.init();
+
+        // Initialize sound on first click (browser security requirement)
+        document.addEventListener('click', () => {
+            this.sound.init();
+        }, { once: true });
+
         this.startGameLoop();
         this.startAutoSave();
     }

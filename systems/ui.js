@@ -35,12 +35,19 @@ export class UIManager {
     }
 
     bindEvents() {
-        document.getElementById('btn-save').addEventListener('click', () => this.game.saveSystem.save());
-        document.getElementById('btn-reset').addEventListener('click', () => this.game.reset());
+        document.getElementById('btn-save').addEventListener('click', () => {
+            this.game.sound?.playClick();
+            this.game.saveSystem.save();
+        });
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            this.game.sound?.playClick();
+            this.game.reset();
+        });
 
         const gigBtn = document.getElementById('refresh-gigs-btn');
         if (gigBtn) {
             gigBtn.addEventListener('click', async () => {
+                this.game.sound?.playClick();
                 gigBtn.innerHTML = '<span class="icon">⏳</span><span class="name">AI กำลังคิดงาน...</span>';
                 gigBtn.disabled = true;
                 this.showToast("กำลังติดต่อลูกค้า...");
@@ -246,6 +253,9 @@ export class UIManager {
             if (event.effects.health) effs.push(`สุขภาพ ${event.effects.health > 0 ? '+' : ''}${event.effects.health}`);
         }
         effects.textContent = effs.join(', ');
+
+        // Play alert sound
+        this.game.sound?.playAlert();
 
         modal.classList.remove('hidden');
 
