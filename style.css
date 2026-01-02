@@ -710,3 +710,170 @@ body {
     border-color: var(--success);
     background: rgba(52, 211, 153, 0.1);
 }
+
+/* Map Grid Navigation */
+.map-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.location-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+.location-card.coming-soon {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.location-card.coming-soon:hover {
+    transform: none;
+    border-color: var(--panel-border);
+    background: rgba(30, 41, 59, 0.6);
+    box-shadow: none;
+}
+
+.location-card .icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.location-card .name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+}
+
+.location-card .desc {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.location-card .badge-soon {
+    font-size: 0.65rem;
+    color: var(--warning);
+    margin-top: 4px;
+}
+
+/* Location Panel */
+.location-panel {
+    animation: slideIn 0.2s ease;
+}
+
+.location-panel.hidden {
+    display: none;
+}
+
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.location-header h3 {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.location-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.submenu-item:hover {
+    background: var(--panel-bg);
+    border-color: var(--accent);
+    transform: translateX(4px);
+}
+
+.submenu-item.coming-soon {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.submenu-item.coming-soon:hover {
+    transform: none;
+    border-color: var(--panel-border);
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.submenu-item .icon {
+    font-size: 1.5rem;
+}
+
+.submenu-item .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.submenu-item .badge-soon {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--warning);
+    background: rgba(251, 191, 36, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Sub Panels */
+.sub-panel {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--panel-border);
+}
+
+.sub-panel.hidden {
+    display: none;
+}
+
+.sub-panel h4 {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

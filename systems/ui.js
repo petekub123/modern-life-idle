@@ -3,6 +3,7 @@ import { ACTIVITIES } from '../data/activities.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS, COURSES } from '../data/skills.js';
 import { PROPERTIES } from '../data/properties.js';
+import { LOCATIONS, LOCATION_ORDER } from '../data/locations.js';
 
 export class UIManager {
     constructor(game) {
@@ -30,6 +31,7 @@ export class UIManager {
 
     init() {
         this.bindEvents();
+        this.renderMap();
         this.renderJobList();
         this.renderActivityList();
         this.renderShop();
@@ -39,6 +41,9 @@ export class UIManager {
         this.renderHousing();
         this.renderBank();
         this.renderStocks();
+
+        // Map navigation state
+        this.currentLocation = null;
     }
 
     bindEvents() {
@@ -801,5 +806,147 @@ export class UIManager {
 
             listEl.appendChild(item);
         });
+    }
+
+    // ===================== MAP NAVIGATION =====================
+
+    renderMap() {
+        const mapGrid = document.getElementById('map-grid');
+        if (!mapGrid) return;
+
+        mapGrid.innerHTML = '';
+
+        // Flatten location order to single array
+        LOCATION_ORDER.forEach(row => {
+            row.forEach(locId => {
+                const loc = LOCATIONS[locId];
+                if (!loc) return;
+
+                const card = document.createElement('div');
+                card.className = `location-card ${loc.status === 'coming_soon' ? 'coming-soon' : ''}`;
+                card.dataset.id = loc.id;
+
+                card.innerHTML = `
+                    <span class="icon">${loc.icon}</span>
+                    <span class="name">${loc.name}</span>
+                    ${loc.status === 'coming_soon' ? '<span class="badge-soon">เร็วๆนี้</span>' : ''}
+                `;
+
+                if (loc.status !== 'coming_soon') {
+                    card.addEventListener('click', () => {
+                        this.game.sound?.playClick();
+                        this.openLocation(loc.id);
+                    });
+                }
+
+                mapGrid.appendChild(card);
+            });
+        });
+
+        // Back to map button
+        document.getElementById('back-to-map')?.addEventListener('click', () => {
+            this.game.sound?.playClick();
+            this.backToMap();
+        });
+    }
+
+    openLocation(locationId) {
+        const loc = LOCATIONS[locationId];
+        if (!loc) return;
+
+        this.currentLocation = locationId;
+
+        // Hide map, show location panel
+        document.getElementById('map-grid').classList.add('hidden');
+        document.getElementById('location-panel').classList.remove('hidden');
+
+        // Set title
+        document.getElementById('location-title').textContent = `${loc.icon} ${loc.name}`;
+
+        // Render submenu
+        const submenuEl = document.getElementById('location-submenu');
+        submenuEl.innerHTML = '';
+
+        loc.submenus.forEach(item => {
+            const menuItem = document.createElement('div');
+            menuItem.className = `submenu-item ${item.action === 'coming_soon' ? 'coming-soon' : ''}`;
+
+            menuItem.innerHTML = `
+                <span class="icon">${item.icon}</span>
+                <span class="name">${item.name}</span>
+                ${item.action === 'coming_soon' ? '<span class="badge-soon">เร็วๆนี้</span>' : ''}
+            `;
+
+            if (item.action !== 'coming_soon') {
+                menuItem.addEventListener('click', () => {
+                    this.game.sound?.playClick();
+                    this.handleSubmenuAction(item);
+                });
+            }
+
+            submenuEl.appendChild(menuItem);
+        });
+    }
+
+    backToMap() {
+        // Hide location panel, show map
+        document.getElementById('map-grid').classList.remove('hidden');
+        document.getElementById('location-panel').classList.add('hidden');
+        document.getElementById('sub-panels').classList.add('hidden');
+
+        // Hide all sub-panels
+        document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+
+        this.currentLocation = null;
+    }
+
+    handleSubmenuAction(item) {
+        const subPanels = document.getElementById('sub-panels');
+
+        switch (item.action) {
+            case 'activity':
+                // Do activity directly
+                this.game.activitySystem.doActivity(item.actionId);
+                break;
+
+            case 'panel':
+                // Show specific panel
+                subPanels.classList.remove('hidden');
+                document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+                const panel = document.getElementById(`panel-${item.panel}`);
+                if (panel) {
+                    panel.classList.remove('hidden');
+
+                    // Re-render panel content
+                    switch (item.panel) {
+                        case 'housing': this.renderHousing(); break;
+                        case 'bank': this.renderBank(); break;
+                        case 'stocks': this.renderStocks(); break;
+                        case 'jobs': this.renderJobList(); break;
+                        case 'skills': this.renderSkills(); break;
+                        case 'courses': this.renderCourses(); break;
+                        case 'shop': this.renderShop(); break;
+                        case 'gigs': break; // Gigs loaded separately
+                    }
+                }
+                break;
+
+            case 'buy_item':
+                // Quick buy item
+                this.game.inventorySystem.buyItem(item.itemId);
+                this.renderInventory();
+                break;
+
+            case 'shop':
+                // Show shop with category
+                subPanels.classList.remove('hidden');
+                document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById('panel-shop')?.classList.remove('hidden');
+                this.renderShop();
+                break;
+
+            default:
+                console.log('Unknown action:', item.action);
+        }
     }
 }

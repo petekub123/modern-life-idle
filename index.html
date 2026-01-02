@@ -77,90 +77,106 @@
                 </div>
             </section>
 
-            <!-- Middle Column: Actions -->
+            <!-- Middle Column: Map Navigation -->
             <section class="panel action-panel">
-                <h2>🎮 กิจกรรม</h2>
+                <h2>🗺️ แผนที่เมือง</h2>
 
-                <div class="action-category">
-                    <h3>🏠 พักผ่อน</h3>
-                    <div class="action-grid">
-                        <!-- Populated by JS -->
+                <!-- Map Grid -->
+                <div id="map-grid" class="map-grid">
+                    <!-- Location cards will be injected by JS -->
+                </div>
+
+                <!-- Current Location Panel (shows when location selected) -->
+                <div id="location-panel" class="location-panel hidden">
+                    <div class="location-header">
+                        <h3 id="location-title">🏠 บ้าน</h3>
+                        <button id="back-to-map" class="small-btn">← กลับแผนที่</button>
+                    </div>
+                    <div id="location-submenu" class="location-submenu">
+                        <!-- Sub-menu items will be injected by JS -->
                     </div>
                 </div>
 
-                <div class="action-category">
-                    <h3>🏪 ร้านสะดวกซื้อ</h3>
-                    <div id="shop-list" class="action-grid">
-                        <!-- Populated by JS -->
+                <!-- Sub-panels (shown inside location or standalone) -->
+                <div id="sub-panels" class="hidden">
+                    <div id="panel-activities" class="sub-panel hidden">
+                        <div class="action-grid" id="activity-grid">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>🎒 กระเป๋าของฉัน</h3>
-                    <div id="inventory-list" class="action-grid">
-                        <!-- Populated by JS -->
+                    <div id="panel-shop" class="sub-panel hidden">
+                        <h4>🏪 ร้านสะดวกซื้อ</h4>
+                        <div id="shop-list" class="action-grid">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>📚 ทักษะ & การเรียนรู้</h3>
-                    <div id="skills-summary" class="action-grid" style="margin-bottom:12px;">
-                        <!-- Skill bars populated by JS -->
+                    <div id="panel-inventory" class="sub-panel hidden">
+                        <h4>🎒 กระเป๋าของฉัน</h4>
+                        <div id="inventory-list" class="action-grid">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
-                    <div id="courses-list" class="action-grid">
-                        <!-- Courses populated by JS -->
-                    </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>🏠 ที่พักอาศัย</h3>
-                    <div id="current-housing" class="housing-current"
-                        style="padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:12px;">
-                        <!-- Current housing info -->
+                    <div id="panel-skills" class="sub-panel hidden">
+                        <h4>📚 ทักษะ</h4>
+                        <div id="skills-summary" class="action-grid">
+                            <!-- Skill bars populated by JS -->
+                        </div>
                     </div>
-                    <div id="housing-list" class="action-list">
-                        <!-- Housing options populated by JS -->
-                    </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>🏦 ธนาคาร</h3>
-                    <div id="bank-info"
-                        style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:12px;">
-                        <!-- Bank info will be injected here -->
+                    <div id="panel-courses" class="sub-panel hidden">
+                        <h4>📖 คอร์สเรียน</h4>
+                        <div id="courses-list" class="action-grid">
+                            <!-- Courses populated by JS -->
+                        </div>
                     </div>
-                    <div id="bank-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                        <!-- Bank actions will be injected here -->
-                    </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>📈 ตลาดหุ้น</h3>
-                    <div id="portfolio-info"
-                        style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:12px;">
-                        <!-- Portfolio info will be injected here -->
+                    <div id="panel-housing" class="sub-panel hidden">
+                        <h4>🏠 ที่พักอาศัย</h4>
+                        <div id="current-housing" class="housing-current"
+                            style="padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:12px;">
+                        </div>
+                        <div id="housing-list" class="action-list">
+                        </div>
                     </div>
-                    <div id="stock-list" class="action-list">
-                        <!-- Stock items will be injected here -->
-                    </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>💼 สมัครงาน</h3>
-                    <div id="job-list" class="action-list">
-                        <!-- Job buttons will be injected here -->
+                    <div id="panel-bank" class="sub-panel hidden">
+                        <h4>🏦 ธนาคาร</h4>
+                        <div id="bank-info"
+                            style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:12px;">
+                        </div>
+                        <div id="bank-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        </div>
                     </div>
-                </div>
 
-                <div class="action-category">
-                    <h3>⚡ งานฟรีแลนซ์ (AI)</h3>
-                    <button id="refresh-gigs-btn" class="action-btn"
-                        style="width:100%; margin-bottom:12px; justify-content:center;">
-                        <span class="icon">🔄</span>
-                        <span class="name">หางานใหม่ AI Generate</span>
-                    </button>
-                    <div id="gig-list" class="action-list">
-                        <div class="status-subtext" style="text-align:center; padding:10px;">กดปุ่มเพื่อหางาน...</div>
+                    <div id="panel-stocks" class="sub-panel hidden">
+                        <h4>📈 ตลาดหุ้น</h4>
+                        <div id="portfolio-info"
+                            style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:12px;">
+                        </div>
+                        <div id="stock-list" class="action-list">
+                        </div>
+                    </div>
+
+                    <div id="panel-jobs" class="sub-panel hidden">
+                        <h4>💼 สมัครงาน</h4>
+                        <div id="job-list" class="action-list">
+                        </div>
+                    </div>
+
+                    <div id="panel-gigs" class="sub-panel hidden">
+                        <h4>⚡ งานฟรีแลนซ์ (AI)</h4>
+                        <button id="refresh-gigs-btn" class="action-btn"
+                            style="width:100%; margin-bottom:12px; justify-content:center;">
+                            <span class="icon">🔄</span>
+                            <span class="name">หางานใหม่ AI Generate</span>
+                        </button>
+                        <div id="gig-list" class="action-list">
+                            <div class="status-subtext" style="text-align:center; padding:10px;">กดปุ่มเพื่อหางาน...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
