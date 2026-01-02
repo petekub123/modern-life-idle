@@ -166,20 +166,16 @@ class Game {
         }
 
         if (paid) {
-            this.ui.log(`🌞 เช้าวันใหม่! จ่ายค่าครองชีพ ${expenses} ฿`);
+            this.ui.log(`🌞 เช้าวันใหม่! จ่ายค่าครองชีพ ${finalExpenses} ฿`);
         } else {
             // Can't pay
-            this.player.stats.money -= expenses; // Go into debt
+            this.player.stats.money -= finalExpenses; // Go into debt
             this.player.modifyStress(20);
-            this.ui.log(`⚠️ เงินไม่พอจ่ายค่าครองชีพ! (${expenses} ฿) ความเครียดเพิ่มขึ้น!`);
+            this.ui.log(`⚠️ เงินไม่พอจ่ายค่าครองชีพ! (${finalExpenses} ฿) ความเครียดเพิ่มขึ้น!`);
         }
 
-        // Banking: interest and loan interest
-        this.bankSystem.processDaily();
-
-        // Stocks: update prices and process dividends
+        // Stocks: update prices (Dividends already processed at start of function)
         this.stockSystem.updatePrices();
-        this.stockSystem.processDividends();
 
         // Refresh job list to update unlock status
         this.ui.renderJobList();

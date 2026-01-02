@@ -3,7 +3,7 @@ import { JOBS } from '../data/jobs.js';
 export class JobSystem {
     constructor(player) {
         this.player = player;
-        this.currentJobId = null;
+        this.currentJobId = 'unemployed';
         this.workProgress = 0;
         this.isWorking = false;
         this.availableGigs = [];
