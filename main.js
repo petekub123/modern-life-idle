@@ -151,13 +151,6 @@ class Game {
             location.reload();
         }
     }
-
-    reset() {
-        if (confirm("ต้องการเริ่มใหม่ทั้งหมดใช่ไหม?")) {
-            this.saveSystem.clear();
-            location.reload();
-        }
-    }
 }
 
 // Start Game

@@ -24,8 +24,10 @@ export class Player {
     get energy() { return this.stats.energy; }
     get maxEnergy() { return this.stats.maxEnergy; }
     get stress() { return this.stats.stress; }
+    get maxStress() { return this.stats.maxStress; }
     get health() { return this.stats.health; }
-    get daysWorked() { return this.stats.daysWorked; }
+    get maxHealth() { return this.stats.maxHealth; }
+    get daysWorked() { return this.stats.daysWorked || 0; }
 
     addDayWorked() {
         this.stats.daysWorked++;
