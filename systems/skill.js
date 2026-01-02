@@ -23,6 +23,10 @@ export class SkillSystem {
         };
     }
 
+    getSkillName(skillId) {
+        return SKILLS[skillId] ? SKILLS[skillId].name : skillId;
+    }
+
     // Get current level for a skill
     getSkillLevel(skillId) {
         const xp = this.skillXP[skillId] || 0;

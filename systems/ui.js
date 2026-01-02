@@ -408,175 +408,179 @@ export class UIManager {
 
             otherTracksDiv.appendChild(grid);
             treeContainer.appendChild(otherTracksDiv);
+        } catch (e) {
+            console.error('Error rendering Career Hub:', e);
+            this.showToast('เกิดข้อผิดพลาดในการโหลดข้อมูลงาน', 'error');
         }
+    }
 
     update(deltaTime) {
-            // Fast updates (bars, money animations)
-            const p = this.game.player;
+        // Fast updates (bars, money animations)
+        const p = this.game.player;
 
-            this.els.money.textContent = Math.floor(p.money).toLocaleString() + ' ฿';
+        this.els.money.textContent = Math.floor(p.money).toLocaleString() + ' ฿';
 
-            this.els.energyBar.style.width = `${(p.energy / p.maxEnergy) * 100}%`;
-            this.els.energyText.textContent = `${Math.floor(p.energy)}/${p.maxEnergy}`;
+        this.els.energyBar.style.width = `${(p.energy / p.maxEnergy) * 100}%`;
+        this.els.energyText.textContent = `${Math.floor(p.energy)}/${p.maxEnergy}`;
 
-            this.els.stressBar.style.width = `${(p.stress / p.maxStress) * 100}%`;
-            this.els.stressText.textContent = `${Math.floor(p.stress)}/${p.maxStress}`;
+        this.els.stressBar.style.width = `${(p.stress / p.maxStress) * 100}%`;
+        this.els.stressText.textContent = `${Math.floor(p.stress)}/${p.maxStress}`;
 
-            this.els.healthBar.style.width = `${(p.health / p.maxHealth) * 100}%`;
-            this.els.healthText.textContent = `${Math.floor(p.health)}/${p.maxHealth}`;
+        this.els.healthBar.style.width = `${(p.health / p.maxHealth) * 100}%`;
+        this.els.healthText.textContent = `${Math.floor(p.health)}/${p.maxHealth}`;
 
-            // Work bar animation
-            if (this.game.jobSystem.isWorking) {
-                this.els.workBar.style.width = `${this.game.jobSystem.workProgress}%`;
+        // Work bar animation
+        if (this.game.jobSystem.isWorking) {
+            this.els.workBar.style.width = `${this.game.jobSystem.workProgress}%`;
+        } else {
+            this.els.workBar.style.width = '0%';
+        }
+    }
+
+    updateTags() {
+        // Slower updates (Text, Clock)
+        this.els.clock.textContent = this.game.timeSystem.getFormattedTime();
+
+        const currentJob = this.game.jobSystem.currentJob || JOBS.unemployed;
+        this.els.jobTitle.textContent = currentJob.name;
+        this.els.jobIncome.textContent = `รายได้: ${currentJob.incomePerSec} ฿/วิ`; // Fix: incomePerSec
+
+        if (this.game.jobSystem.isWorking) {
+            let statusText = "กำลังทำงาน...";
+            let penalties = [];
+
+            // Show penalties (stress only, no health penalty)
+            if (this.game.player.stress > 80) {
+                penalties.push("🔥 เครียด -50%");
+            }
+
+            if (penalties.length > 0) {
+                statusText = `ทำงานอยู่ (${penalties.join(', ')})`;
+                this.els.workStatus.style.color = "#fbbf24";
             } else {
-                this.els.workBar.style.width = '0%';
+                statusText = "กำลังทำงาน... (คลิกงานอื่นเพื่อเปลี่ยน)";
+                this.els.workStatus.style.color = "#4ecca3";
             }
-        }
-
-        updateTags() {
-            // Slower updates (Text, Clock)
-            this.els.clock.textContent = this.game.timeSystem.getFormattedTime();
-
-            const currentJob = this.game.jobSystem.currentJob || JOBS.unemployed;
-            this.els.jobTitle.textContent = currentJob.name;
-            this.els.jobIncome.textContent = `รายได้: ${currentJob.incomePerSec} ฿/วิ`; // Fix: incomePerSec
-
-            if (this.game.jobSystem.isWorking) {
-                let statusText = "กำลังทำงาน...";
-                let penalties = [];
-
-                // Show penalties (stress only, no health penalty)
-                if (this.game.player.stress > 80) {
-                    penalties.push("🔥 เครียด -50%");
-                }
-
-                if (penalties.length > 0) {
-                    statusText = `ทำงานอยู่ (${penalties.join(', ')})`;
-                    this.els.workStatus.style.color = "#fbbf24";
-                } else {
-                    statusText = "กำลังทำงาน... (คลิกงานอื่นเพื่อเปลี่ยน)";
-                    this.els.workStatus.style.color = "#4ecca3";
-                }
-                this.els.workStatus.textContent = statusText;
+            this.els.workStatus.textContent = statusText;
+        } else {
+            if (currentJob.id !== 'unemployed') {
+                this.els.workStatus.textContent = "หยุดทำงาน (พลังงานหมด!)";
+                this.els.workStatus.style.color = "#e94560";
             } else {
-                if (currentJob.id !== 'unemployed') {
-                    this.els.workStatus.textContent = "หยุดทำงาน (พลังงานหมด!)";
-                    this.els.workStatus.style.color = "#e94560";
-                } else {
-                    this.els.workStatus.textContent = "ไม่ได้ทำงาน";
-                    this.els.workStatus.style.color = "#a0a0b0";
-                }
+                this.els.workStatus.textContent = "ไม่ได้ทำงาน";
+                this.els.workStatus.style.color = "#a0a0b0";
             }
         }
+    }
 
-        log(msg) {
-            const li = document.createElement('li');
-            li.className = 'log-item';
-            li.textContent = `[${this.game.timeSystem.getFormattedTime().split(' - ')[1]}] ${msg}`;
-            this.els.logList.prepend(li);
+    log(msg) {
+        const li = document.createElement('li');
+        li.className = 'log-item';
+        li.textContent = `[${this.game.timeSystem.getFormattedTime().split(' - ')[1]}] ${msg}`;
+        this.els.logList.prepend(li);
 
-            if (this.els.logList.children.length > 50) {
-                this.els.logList.removeChild(this.els.logList.lastChild);
-            }
+        if (this.els.logList.children.length > 50) {
+            this.els.logList.removeChild(this.els.logList.lastChild);
         }
+    }
 
-        showEventModal(event) {
-            const modal = document.getElementById('event-modal');
-            const title = document.getElementById('modal-title');
-            const desc = document.getElementById('modal-desc');
-            const effects = document.getElementById('modal-effects');
-            const closeBtn = document.getElementById('modal-close');
+    showEventModal(event) {
+        const modal = document.getElementById('event-modal');
+        const title = document.getElementById('modal-title');
+        const desc = document.getElementById('modal-desc');
+        const effects = document.getElementById('modal-effects');
+        const closeBtn = document.getElementById('modal-close');
 
-            title.textContent = event.title;
-            desc.textContent = event.desc;
+        title.textContent = event.title;
+        desc.textContent = event.desc;
 
-            // Format effects string
-            const effs = [];
-            if (event.effects) {
-                if (event.effects.money) effs.push(`เงิน ${event.effects.money > 0 ? '+' : ''}${event.effects.money}`);
-                if (event.effects.stress) effs.push(`ความเครียด ${event.effects.stress > 0 ? '+' : ''}${event.effects.stress}`);
-                if (event.effects.energy) effs.push(`พลังงาน ${event.effects.energy > 0 ? '+' : ''}${event.effects.energy}`);
-                if (event.effects.health) effs.push(`สุขภาพ ${event.effects.health > 0 ? '+' : ''}${event.effects.health}`);
-            }
-            effects.textContent = effs.join(', ');
-
-            // Play alert sound
-            this.game.sound?.playAlert();
-
-            modal.classList.remove('hidden');
-
-            closeBtn.onclick = () => {
-                modal.classList.add('hidden');
-            };
+        // Format effects string
+        const effs = [];
+        if (event.effects) {
+            if (event.effects.money) effs.push(`เงิน ${event.effects.money > 0 ? '+' : ''}${event.effects.money}`);
+            if (event.effects.stress) effs.push(`ความเครียด ${event.effects.stress > 0 ? '+' : ''}${event.effects.stress}`);
+            if (event.effects.energy) effs.push(`พลังงาน ${event.effects.energy > 0 ? '+' : ''}${event.effects.energy}`);
+            if (event.effects.health) effs.push(`สุขภาพ ${event.effects.health > 0 ? '+' : ''}${event.effects.health}`);
         }
+        effects.textContent = effs.join(', ');
 
-        showToast(msg, type = 'normal') {
-            this.log(msg);
-        }
+        // Play alert sound
+        this.game.sound?.playAlert();
 
-        showOfflineModal(data) {
-            const modal = document.getElementById('offline-modal');
-            const details = document.getElementById('offline-details');
-            const closeBtn = document.getElementById('offline-close');
+        modal.classList.remove('hidden');
 
-            if (!modal) return;
+        closeBtn.onclick = () => {
+            modal.classList.add('hidden');
+        };
+    }
 
-            let html = `
+    showToast(msg, type = 'normal') {
+        this.log(msg);
+    }
+
+    showOfflineModal(data) {
+        const modal = document.getElementById('offline-modal');
+        const details = document.getElementById('offline-details');
+        const closeBtn = document.getElementById('offline-close');
+
+        if (!modal) return;
+
+        let html = `
             <div class="result-row">
                 <span>🕒 เวลาที่ผ่านไป:</span>
                 <span>${Math.floor(data.seconds / 60)} นาที</span>
             </div>
         `;
 
-            if (data.income > 0) {
-                html += `
+        if (data.income > 0) {
+            html += `
             <div class="result-row icon-row">
                 <span>💰 รายได้จากงาน:</span>
                 <span class="value">+${data.income} ฿</span>
             </div>`;
-            } else {
-                html += `
+        } else {
+            html += `
             <div class="result-row">
                 <span>🏢 การทำงาน:</span>
                 <span>ไม่ได้ทำงานอยู่</span>
             </div>`;
-            }
+        }
 
-            if (data.energy > 0) {
-                html += `
+        if (data.energy > 0) {
+            html += `
             <div class="result-row icon-row">
                 <span>⚡ พลังงานฟื้นฟู:</span>
                 <span class="value">+${data.energy}</span>
             </div>`;
-            }
-
-            details.innerHTML = html;
-            modal.classList.remove('hidden');
-
-            closeBtn.onclick = () => {
-                modal.classList.add('hidden');
-            };
         }
 
-        renderGigs(gigs) {
-            const container = document.getElementById('gig-list');
-            if (!container) return;
-            container.innerHTML = '';
+        details.innerHTML = html;
+        modal.classList.remove('hidden');
 
-            if (!gigs || gigs.length === 0) {
-                container.innerHTML = '<div class="status-subtext" style="text-align:center;">ไม่พบงานที่น่าสนใจ</div>';
-                return;
-            }
+        closeBtn.onclick = () => {
+            modal.classList.add('hidden');
+        };
+    }
 
-            gigs.forEach(gig => {
-                const btn = document.createElement('button');
-                btn.className = 'job-item-btn'; // Reuse style
-                btn.style.flexDirection = 'column';
-                btn.style.alignItems = 'flex-start';
-                btn.style.gap = '8px';
-                btn.style.height = 'auto'; // Auto height
+    renderGigs(gigs) {
+        const container = document.getElementById('gig-list');
+        if (!container) return;
+        container.innerHTML = '';
 
-                btn.innerHTML = `
+        if (!gigs || gigs.length === 0) {
+            container.innerHTML = '<div class="status-subtext" style="text-align:center;">ไม่พบงานที่น่าสนใจ</div>';
+            return;
+        }
+
+        gigs.forEach(gig => {
+            const btn = document.createElement('button');
+            btn.className = 'job-item-btn'; // Reuse style
+            btn.style.flexDirection = 'column';
+            btn.style.alignItems = 'flex-start';
+            btn.style.gap = '8px';
+            btn.style.height = 'auto'; // Auto height
+
+            btn.innerHTML = `
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                     <span style="font-weight:600; color:var(--accent); font-size:0.95rem;">${gig.title}</span>
                     <span style="color:var(--success); font-weight:700;">+${gig.pay}฿</span>
@@ -588,32 +592,32 @@ export class UIManager {
                 </div>
             `;
 
-                btn.onclick = () => {
-                    const success = this.game.jobSystem.doGig(gig);
-                    if (success) {
-                        this.showToast(`รับงาน: "${gig.title}" สำเร็จ! (+${gig.pay}฿)`);
-                        btn.remove();
-                    } else {
-                        this.showToast("พลังงานไม่พอทำงานนี้!", "error");
-                    }
-                };
-                container.appendChild(btn);
-            });
-        }
+            btn.onclick = () => {
+                const success = this.game.jobSystem.doGig(gig);
+                if (success) {
+                    this.showToast(`รับงาน: "${gig.title}" สำเร็จ! (+${gig.pay}฿)`);
+                    btn.remove();
+                } else {
+                    this.showToast("พลังงานไม่พอทำงานนี้!", "error");
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
 
-        renderSkills() {
-            const container = document.getElementById('skills-summary');
-            if (!container) return;
+    renderSkills() {
+        const container = document.getElementById('skills-summary');
+        if (!container) return;
 
-            container.innerHTML = '';
+        container.innerHTML = '';
 
-            const skills = this.game.skillSystem.getAllSkillsStatus();
-            skills.forEach(skill => {
-                const div = document.createElement('div');
-                div.className = 'skill-item';
-                div.style.cssText = 'display:flex; flex-direction:column; gap:4px; padding:8px; background:rgba(255,255,255,0.03); border-radius:8px;';
+        const skills = this.game.skillSystem.getAllSkillsStatus();
+        skills.forEach(skill => {
+            const div = document.createElement('div');
+            div.className = 'skill-item';
+            div.style.cssText = 'display:flex; flex-direction:column; gap:4px; padding:8px; background:rgba(255,255,255,0.03); border-radius:8px;';
 
-                div.innerHTML = `
+            div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span>${skill.icon} ${skill.name}</span>
                     <span style="color:var(--accent); font-weight:bold;">Lv.${skill.level}${skill.level >= skill.maxLevel ? ' MAX' : ''}</span>
@@ -623,92 +627,92 @@ export class UIManager {
                 </div>
                 <div style="font-size:0.7rem; color:#888;">+${Math.round((SKILLS[skill.id].incomeBonus * skill.level) * 100)}% รายได้</div>
             `;
-                container.appendChild(div);
-            });
-        }
+            container.appendChild(div);
+        });
+    }
 
-        renderCourses() {
-            const container = document.getElementById('courses-list');
-            if (!container) return;
+    renderCourses() {
+        const container = document.getElementById('courses-list');
+        if (!container) return;
 
-            container.innerHTML = '';
+        container.innerHTML = '';
 
-            Object.values(COURSES).forEach(course => {
-                const skill = SKILLS[course.skillId];
-                const btn = document.createElement('button');
-                btn.className = 'action-btn';
-                btn.innerHTML = `
+        Object.values(COURSES).forEach(course => {
+            const skill = SKILLS[course.skillId];
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.innerHTML = `
                 <span class="icon">${course.icon}</span>
                 <span class="name">${course.name}</span>
                 <span class="desc">${skill.icon} +${course.xpGain} XP</span>
                 <span class="desc" style="color:var(--stress)">-${course.moneyCost}฿ -${course.energyCost}⚡</span>
             `;
 
-                btn.addEventListener('click', () => {
-                    this.game.sound?.playClick();
-                    const success = this.game.skillSystem.takeCourse(course.id);
-                    if (success) {
-                        this.renderSkills(); // Update skill display
-                    }
-                });
-
-                container.appendChild(btn);
+            btn.addEventListener('click', () => {
+                this.game.sound?.playClick();
+                const success = this.game.skillSystem.takeCourse(course.id);
+                if (success) {
+                    this.renderSkills(); // Update skill display
+                }
             });
-        }
+
+            container.appendChild(btn);
+        });
+    }
 
     async showFriendCall() {
-            const modal = document.getElementById('friend-modal');
-            const statusDiv = document.getElementById('friend-status');
-            const chatDiv = document.getElementById('friend-chat');
-            const errorDiv = document.getElementById('friend-error');
-            const nameEl = document.getElementById('friend-name');
-            const messageEl = document.getElementById('friend-message');
-            const errorMsgEl = document.getElementById('friend-error-msg');
-            const apiStatusEl = document.getElementById('friend-api-status');
+        const modal = document.getElementById('friend-modal');
+        const statusDiv = document.getElementById('friend-status');
+        const chatDiv = document.getElementById('friend-chat');
+        const errorDiv = document.getElementById('friend-error');
+        const nameEl = document.getElementById('friend-name');
+        const messageEl = document.getElementById('friend-message');
+        const errorMsgEl = document.getElementById('friend-error-msg');
+        const apiStatusEl = document.getElementById('friend-api-status');
 
-            // Reset state
-            statusDiv.classList.remove('hidden');
-            chatDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-            modal.classList.remove('hidden');
+        // Reset state
+        statusDiv.classList.remove('hidden');
+        chatDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        modal.classList.remove('hidden');
 
-            // Play ring sound
-            this.game.sound?.playAlert();
+        // Play ring sound
+        this.game.sound?.playAlert();
 
-            // Call the AI
-            const result = await this.game.eventSystem.aiService.callFriend();
+        // Call the AI
+        const result = await this.game.eventSystem.aiService.callFriend();
 
-            // Small delay for effect
-            await new Promise(r => setTimeout(r, 500));
+        // Small delay for effect
+        await new Promise(r => setTimeout(r, 500));
 
-            statusDiv.classList.add('hidden');
+        statusDiv.classList.add('hidden');
 
-            if (result.success) {
-                // Success - show chat
-                nameEl.textContent = result.name;
-                messageEl.textContent = result.message;
-                apiStatusEl.innerHTML = '✅ AI เชื่อมต่อสำเร็จ';
-                chatDiv.classList.remove('hidden');
-                this.game.sound?.playSuccess();
-            } else {
-                // Error - show error
-                errorMsgEl.textContent = result.message || "เพื่อนไม่รับสาย";
-                errorDiv.classList.remove('hidden');
-                this.game.sound?.playError();
-            }
+        if (result.success) {
+            // Success - show chat
+            nameEl.textContent = result.name;
+            messageEl.textContent = result.message;
+            apiStatusEl.innerHTML = '✅ AI เชื่อมต่อสำเร็จ';
+            chatDiv.classList.remove('hidden');
+            this.game.sound?.playSuccess();
+        } else {
+            // Error - show error
+            errorMsgEl.textContent = result.message || "เพื่อนไม่รับสาย";
+            errorDiv.classList.remove('hidden');
+            this.game.sound?.playError();
         }
+    }
 
-        renderHousing() {
-            const currentContainer = document.getElementById('current-housing');
-            const listContainer = document.getElementById('housing-list');
-            if (!currentContainer || !listContainer) return;
+    renderHousing() {
+        const currentContainer = document.getElementById('current-housing');
+        const listContainer = document.getElementById('housing-list');
+        if (!currentContainer || !listContainer) return;
 
-            const housing = this.game.housingSystem;
-            const current = housing.currentProperty;
-            const dailyExpenses = housing.getDailyExpenses();
+        const housing = this.game.housingSystem;
+        const current = housing.currentProperty;
+        const dailyExpenses = housing.getDailyExpenses();
 
-            // Current housing info
-            currentContainer.innerHTML = `
+        // Current housing info
+        currentContainer.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <span style="font-size:1.5rem;">${current.icon}</span>
@@ -722,40 +726,40 @@ export class UIManager {
             </div>
         `;
 
-            // Housing list
-            listContainer.innerHTML = '';
-            const properties = housing.getAvailableProperties();
+        // Housing list
+        listContainer.innerHTML = '';
+        const properties = housing.getAvailableProperties();
 
-            properties.forEach(prop => {
-                if (prop.isCurrent) return; // Skip current
+        properties.forEach(prop => {
+            if (prop.isCurrent) return; // Skip current
 
-                const btn = document.createElement('div');
-                btn.className = 'job-item-btn';
-                btn.style.flexDirection = 'column';
-                btn.style.alignItems = 'stretch';
-                btn.style.gap = '8px';
+            const btn = document.createElement('div');
+            btn.className = 'job-item-btn';
+            btn.style.flexDirection = 'column';
+            btn.style.alignItems = 'stretch';
+            btn.style.gap = '8px';
 
-                const canRent = prop.canRent && !prop.isCurrent;
-                const canBuy = prop.canBuy;
-                const isOwned = prop.isOwned;
+            const canRent = prop.canRent && !prop.isCurrent;
+            const canBuy = prop.canBuy;
+            const isOwned = prop.isOwned;
 
-                if (!canRent && !isOwned) {
-                    btn.style.opacity = '0.5';
+            if (!canRent && !isOwned) {
+                btn.style.opacity = '0.5';
+            }
+
+            let actionsHtml = '';
+            if (isOwned) {
+                actionsHtml = `<button class="housing-btn rent-btn" data-action="move" data-id="${prop.id}">🏠 ย้ายเข้า</button>`;
+            } else {
+                if (canRent) {
+                    actionsHtml += `<button class="housing-btn rent-btn" data-action="rent" data-id="${prop.id}">🔑 เช่า ${prop.rentPerDay}฿/วัน</button>`;
                 }
-
-                let actionsHtml = '';
-                if (isOwned) {
-                    actionsHtml = `<button class="housing-btn rent-btn" data-action="move" data-id="${prop.id}">🏠 ย้ายเข้า</button>`;
-                } else {
-                    if (canRent) {
-                        actionsHtml += `<button class="housing-btn rent-btn" data-action="rent" data-id="${prop.id}">🔑 เช่า ${prop.rentPerDay}฿/วัน</button>`;
-                    }
-                    if (prop.buyPrice) {
-                        actionsHtml += `<button class="housing-btn buy-btn ${canBuy ? '' : 'disabled'}" data-action="buy" data-id="${prop.id}" ${canBuy ? '' : 'disabled'}>💰 ซื้อ ${prop.buyPrice.toLocaleString()}฿</button>`;
-                    }
+                if (prop.buyPrice) {
+                    actionsHtml += `<button class="housing-btn buy-btn ${canBuy ? '' : 'disabled'}" data-action="buy" data-id="${prop.id}" ${canBuy ? '' : 'disabled'}>💰 ซื้อ ${prop.buyPrice.toLocaleString()}฿</button>`;
                 }
+            }
 
-                btn.innerHTML = `
+            btn.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span style="font-size:1.2rem;">${prop.icon}</span>
@@ -774,57 +778,57 @@ export class UIManager {
                 </div>
             `;
 
-                // Event listeners for buttons
-                btn.querySelectorAll('button').forEach(actionBtn => {
-                    actionBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const action = actionBtn.dataset.action;
-                        const id = actionBtn.dataset.id;
-                        this.game.sound?.playClick();
+            // Event listeners for buttons
+            btn.querySelectorAll('button').forEach(actionBtn => {
+                actionBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = actionBtn.dataset.action;
+                    const id = actionBtn.dataset.id;
+                    this.game.sound?.playClick();
 
-                        if (action === 'rent' || action === 'move') {
-                            if (housing.rent(id)) {
-                                this.renderHousing();
-                            }
-                        } else if (action === 'buy') {
-                            if (housing.buy(id)) {
-                                this.renderHousing();
-                            } else {
-                                this.showToast('เงินไม่พอซื้อ!');
-                            }
+                    if (action === 'rent' || action === 'move') {
+                        if (housing.rent(id)) {
+                            this.renderHousing();
                         }
-                    });
+                    } else if (action === 'buy') {
+                        if (housing.buy(id)) {
+                            this.renderHousing();
+                        } else {
+                            this.showToast('เงินไม่พอซื้อ!');
+                        }
+                    }
                 });
-
-                listContainer.appendChild(btn);
             });
+
+            listContainer.appendChild(btn);
+        });
+    }
+
+    updateNewsTicker(event) {
+        const ticker = document.getElementById('news-feed');
+        if (!ticker) return;
+
+        if (event) {
+            ticker.innerHTML = `<span style="color:var(--accent); font-weight:bold;">${event.headline}</span>`;
+            ticker.classList.add('breaking-news');
+        } else {
+            ticker.innerHTML = '📰 ตลาดหุ้นเปิดทำการปกติ... ติดตามข่าวสารเร็วๆ นี้';
+            ticker.classList.remove('breaking-news');
         }
+    }
 
-        updateNewsTicker(event) {
-            const ticker = document.getElementById('news-feed');
-            if (!ticker) return;
+    renderBank() {
+        const infoEl = document.getElementById('bank-info');
+        const actionsEl = document.getElementById('bank-actions');
+        if (!infoEl || !actionsEl) return;
 
-            if (event) {
-                ticker.innerHTML = `<span style="color:var(--accent); font-weight:bold;">${event.headline}</span>`;
-                ticker.classList.add('breaking-news');
-            } else {
-                ticker.innerHTML = '📰 ตลาดหุ้นเปิดทำการปกติ... ติดตามข่าวสารเร็วๆ นี้';
-                ticker.classList.remove('breaking-news');
-            }
-        }
+        const bank = this.game.bankSystem;
+        const balance = Math.floor(bank.balance);
+        const loan = Math.floor(bank.loan);
+        const loanLimit = bank.getLoanLimit();
+        const available = bank.getAvailableLoan();
 
-        renderBank() {
-            const infoEl = document.getElementById('bank-info');
-            const actionsEl = document.getElementById('bank-actions');
-            if (!infoEl || !actionsEl) return;
-
-            const bank = this.game.bankSystem;
-            const balance = Math.floor(bank.balance);
-            const loan = Math.floor(bank.loan);
-            const loanLimit = bank.getLoanLimit();
-            const available = bank.getAvailableLoan();
-
-            infoEl.innerHTML = `
+        infoEl.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                 <span>💰 ยอดเงินฝาก:</span>
                 <strong style="color:var(--success);">${balance.toLocaleString()}฿</strong>
@@ -838,64 +842,64 @@ export class UIManager {
             </div>
         `;
 
-            actionsEl.innerHTML = `
+        actionsEl.innerHTML = `
             <button class="small-btn" id="btn-deposit">🟢 ฝากเงิน</button>
             <button class="small-btn" id="btn-withdraw">🟡 ถอนเงิน</button>
             <button class="small-btn" id="btn-loan" ${available === 0 ? 'disabled style="opacity:0.5"' : ''}>💳 กู้เงิน</button>
             <button class="small-btn" id="btn-repay" ${loan === 0 ? 'disabled style="opacity:0.5"' : ''}>✅ ชำระหนี้</button>
         `;
 
-            // Add event listeners (With ParseInt Fix)
-            document.getElementById('btn-deposit')?.addEventListener('click', () => {
-                const input = prompt('ฝากเงินเท่าไหร่?', '1000');
-                const amount = parseInt(input);
-                if (amount && amount > 0) {
-                    bank.deposit(amount);
-                    this.renderBank();
-                }
-            });
+        // Add event listeners (With ParseInt Fix)
+        document.getElementById('btn-deposit')?.addEventListener('click', () => {
+            const input = prompt('ฝากเงินเท่าไหร่?', '1000');
+            const amount = parseInt(input);
+            if (amount && amount > 0) {
+                bank.deposit(amount);
+                this.renderBank();
+            }
+        });
 
-            document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-                const input = prompt('ถอนเงินเท่าไหร่?', '1000');
-                const amount = parseInt(input);
-                if (amount && amount > 0) {
-                    bank.withdraw(amount);
-                    this.renderBank();
-                }
-            });
+        document.getElementById('btn-withdraw')?.addEventListener('click', () => {
+            const input = prompt('ถอนเงินเท่าไหร่?', '1000');
+            const amount = parseInt(input);
+            if (amount && amount > 0) {
+                bank.withdraw(amount);
+                this.renderBank();
+            }
+        });
 
-            document.getElementById('btn-loan')?.addEventListener('click', () => {
-                const max = bank.getAvailableLoan();
-                const input = prompt(`กู้เงินเท่าไหร่? (สูงสุด ${max}฿)`, String(max));
-                const amount = parseInt(input);
-                if (amount && amount > 0) {
-                    bank.takeLoan(amount);
-                    this.renderBank();
-                }
-            });
+        document.getElementById('btn-loan')?.addEventListener('click', () => {
+            const max = bank.getAvailableLoan();
+            const input = prompt(`กู้เงินเท่าไหร่? (สูงสุด ${max}฿)`, String(max));
+            const amount = parseInt(input);
+            if (amount && amount > 0) {
+                bank.takeLoan(amount);
+                this.renderBank();
+            }
+        });
 
-            document.getElementById('btn-repay')?.addEventListener('click', () => {
-                const owed = Math.floor(bank.loan);
-                const input = prompt(`ชำระหนี้เท่าไหร่? (หนี้คงค้าง ${owed}฿)`, String(owed));
-                const amount = parseInt(input);
-                if (amount && amount > 0) {
-                    bank.repayLoan(amount);
-                    this.renderBank();
-                }
-            });
-        }
+        document.getElementById('btn-repay')?.addEventListener('click', () => {
+            const owed = Math.floor(bank.loan);
+            const input = prompt(`ชำระหนี้เท่าไหร่? (หนี้คงค้าง ${owed}฿)`, String(owed));
+            const amount = parseInt(input);
+            if (amount && amount > 0) {
+                bank.repayLoan(amount);
+                this.renderBank();
+            }
+        });
+    }
 
-        renderStocks() {
-            const infoEl = document.getElementById('portfolio-info');
-            const listEl = document.getElementById('stock-list');
-            if (!infoEl || !listEl) return;
+    renderStocks() {
+        const infoEl = document.getElementById('portfolio-info');
+        const listEl = document.getElementById('stock-list');
+        if (!infoEl || !listEl) return;
 
-            const stock = this.game.stockSystem;
-            const bank = this.game.bankSystem;
-            const portfolioValue = stock.getPortfolioValue();
-            const profitLoss = stock.getPortfolioProfitLoss();
+        const stock = this.game.stockSystem;
+        const bank = this.game.bankSystem;
+        const portfolioValue = stock.getPortfolioValue();
+        const profitLoss = stock.getPortfolioProfitLoss();
 
-            infoEl.innerHTML = `
+        infoEl.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                 <span>💼 มูลค่า Portfolio:</span>
                 <strong style="color:var(--accent);">${portfolioValue.toLocaleString()}฿</strong>
@@ -911,23 +915,23 @@ export class UIManager {
             </div>
         `;
 
-            listEl.innerHTML = '';
-            const stocks = stock.getAllStocksInfo();
+        listEl.innerHTML = '';
+        const stocks = stock.getAllStocksInfo();
 
-            stocks.forEach(s => {
-                const item = document.createElement('div');
-                item.className = 'stock-card';
+        stocks.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'stock-card';
 
-                const hasShares = s.shares > 0;
-                const plColor = s.profitLoss >= 0 ? 'var(--success)' : 'var(--stress)';
-                const trendIcon = s.trend === 'up' ? '📈' : s.trend === 'down' ? '📉' : '➖';
-                const trendColor = s.trend === 'up' ? 'var(--success)' : s.trend === 'down' ? 'var(--stress)' : 'var(--text-secondary)';
-                const changeText = s.priceChange >= 0 ? `+${s.priceChange.toFixed(1)}%` : `${s.priceChange.toFixed(1)}%`;
+            const hasShares = s.shares > 0;
+            const plColor = s.profitLoss >= 0 ? 'var(--success)' : 'var(--stress)';
+            const trendIcon = s.trend === 'up' ? '📈' : s.trend === 'down' ? '📉' : '➖';
+            const trendColor = s.trend === 'up' ? 'var(--success)' : s.trend === 'down' ? 'var(--stress)' : 'var(--text-secondary)';
+            const changeText = s.priceChange >= 0 ? `+${s.priceChange.toFixed(1)}%` : `${s.priceChange.toFixed(1)}%`;
 
-                // Generate SVG sparkline
-                const sparkline = this.generateSparkline(s.priceHistory, s.trend);
+            // Generate SVG sparkline
+            const sparkline = this.generateSparkline(s.priceHistory, s.trend);
 
-                item.innerHTML = `
+            item.innerHTML = `
                 <div class="stock-header">
                     <div class="stock-info">
                         <span style="font-size:1.3rem;">${s.icon}</span>
@@ -962,305 +966,305 @@ export class UIManager {
                 </div>
             `;
 
-                // Event listeners
-                item.querySelectorAll('button').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const action = btn.dataset.action;
-                        const id = btn.dataset.id;
-                        const price = stock.getPrice(id);
+            // Event listeners
+            item.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    const id = btn.dataset.id;
+                    const price = stock.getPrice(id);
 
-                        this.game.sound?.playClick();
+                    this.game.sound?.playClick();
 
-                        if (action === 'buy') {
-                            const maxShares = Math.floor(bank.balance / price);
-                            const shares = parseInt(prompt(`ซื้อกี่หุ้น? (ราคา ${price.toFixed(2)}฿, ซื้อได้สูงสุด ${maxShares} หุ้น)`, '1'));
-                            if (shares && shares > 0) {
-                                stock.buy(id, shares);
-                                this.renderStocks();
-                                this.renderBank();
-                            }
-                        } else if (action === 'sell') {
-                            const owned = stock.getShares(id);
-                            const shares = parseInt(prompt(`ขายกี่หุ้น? (ถืออยู่ ${owned} หุ้น)`, String(owned)));
-                            if (shares && shares > 0) {
-                                stock.sell(id, shares);
-                                this.renderStocks();
-                                this.renderBank();
-                            }
+                    if (action === 'buy') {
+                        const maxShares = Math.floor(bank.balance / price);
+                        const shares = parseInt(prompt(`ซื้อกี่หุ้น? (ราคา ${price.toFixed(2)}฿, ซื้อได้สูงสุด ${maxShares} หุ้น)`, '1'));
+                        if (shares && shares > 0) {
+                            stock.buy(id, shares);
+                            this.renderStocks();
+                            this.renderBank();
                         }
-                    });
+                    } else if (action === 'sell') {
+                        const owned = stock.getShares(id);
+                        const shares = parseInt(prompt(`ขายกี่หุ้น? (ถืออยู่ ${owned} หุ้น)`, String(owned)));
+                        if (shares && shares > 0) {
+                            stock.sell(id, shares);
+                            this.renderStocks();
+                            this.renderBank();
+                        }
+                    }
                 });
-
-                listEl.appendChild(item);
             });
+
+            listEl.appendChild(item);
+        });
+    }
+
+    // Generate SVG sparkline for price history
+    generateSparkline(history, trend) {
+        if (!history || history.length < 2) {
+            return '<div style="height:40px; display:flex; align-items:center; justify-content:center; color:#666; font-size:0.7rem;">รอข้อมูล...</div>';
         }
 
-        // Generate SVG sparkline for price history
-        generateSparkline(history, trend) {
-            if (!history || history.length < 2) {
-                return '<div style="height:40px; display:flex; align-items:center; justify-content:center; color:#666; font-size:0.7rem;">รอข้อมูล...</div>';
-            }
+        const width = 200;
+        const height = 40;
+        const padding = 2;
 
-            const width = 200;
-            const height = 40;
-            const padding = 2;
+        const min = Math.min(...history);
+        const max = Math.max(...history);
+        const range = max - min || 1;
 
-            const min = Math.min(...history);
-            const max = Math.max(...history);
-            const range = max - min || 1;
+        const points = history.map((price, i) => {
+            const x = padding + (i / (history.length - 1)) * (width - padding * 2);
+            const y = height - padding - ((price - min) / range) * (height - padding * 2);
+            return `${x},${y}`;
+        }).join(' ');
 
-            const points = history.map((price, i) => {
-                const x = padding + (i / (history.length - 1)) * (width - padding * 2);
-                const y = height - padding - ((price - min) / range) * (height - padding * 2);
-                return `${x},${y}`;
-            }).join(' ');
+        const lineColor = trend === 'up' ? '#34d399' : trend === 'down' ? '#ef4444' : '#888';
+        const fillColor = trend === 'up' ? 'rgba(52,211,153,0.1)' : trend === 'down' ? 'rgba(239,68,68,0.1)' : 'rgba(136,136,136,0.1)';
 
-            const lineColor = trend === 'up' ? '#34d399' : trend === 'down' ? '#ef4444' : '#888';
-            const fillColor = trend === 'up' ? 'rgba(52,211,153,0.1)' : trend === 'down' ? 'rgba(239,68,68,0.1)' : 'rgba(136,136,136,0.1)';
+        // Create fill polygon
+        const fillPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
 
-            // Create fill polygon
-            const fillPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
-
-            return `
+        return `
             <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
                 <polygon points="${fillPoints}" fill="${fillColor}"/>
                 <polyline points="${points}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         `;
-        }
+    }
 
-        // ===================== MAP NAVIGATION =====================
+    // ===================== MAP NAVIGATION =====================
 
-        renderMap() {
-            const mapGrid = document.getElementById('map-grid');
-            if (!mapGrid) return;
+    renderMap() {
+        const mapGrid = document.getElementById('map-grid');
+        if (!mapGrid) return;
 
-            mapGrid.innerHTML = '';
+        mapGrid.innerHTML = '';
 
-            // Flatten location order to single array
-            LOCATION_ORDER.forEach(row => {
-                row.forEach(locId => {
-                    const loc = LOCATIONS[locId];
-                    if (!loc) return;
+        // Flatten location order to single array
+        LOCATION_ORDER.forEach(row => {
+            row.forEach(locId => {
+                const loc = LOCATIONS[locId];
+                if (!loc) return;
 
-                    const card = document.createElement('div');
-                    card.className = `location-card ${loc.status === 'coming_soon' ? 'coming-soon' : ''}`;
-                    card.dataset.id = loc.id;
+                const card = document.createElement('div');
+                card.className = `location-card ${loc.status === 'coming_soon' ? 'coming-soon' : ''}`;
+                card.dataset.id = loc.id;
 
-                    card.innerHTML = `
+                card.innerHTML = `
                     <span class="icon">${loc.icon}</span>
                     <span class="name">${loc.name}</span>
                     ${loc.status === 'coming_soon' ? '<span class="badge-soon">เร็วๆนี้</span>' : ''}
                 `;
 
-                    if (loc.status !== 'coming_soon') {
-                        card.addEventListener('click', () => {
-                            this.game.sound?.playClick();
-                            this.openLocation(loc.id);
-                        });
-                    }
+                if (loc.status !== 'coming_soon') {
+                    card.addEventListener('click', () => {
+                        this.game.sound?.playClick();
+                        this.openLocation(loc.id);
+                    });
+                }
 
-                    mapGrid.appendChild(card);
-                });
+                mapGrid.appendChild(card);
             });
+        });
 
-            // Back to map button
-            document.getElementById('back-to-map')?.addEventListener('click', () => {
-                this.game.sound?.playClick();
-                this.backToMap();
-            });
-        }
+        // Back to map button
+        document.getElementById('back-to-map')?.addEventListener('click', () => {
+            this.game.sound?.playClick();
+            this.backToMap();
+        });
+    }
 
-        openLocation(locationId) {
-            const loc = LOCATIONS[locationId];
-            if (!loc) return;
+    openLocation(locationId) {
+        const loc = LOCATIONS[locationId];
+        if (!loc) return;
 
-            this.currentLocation = locationId;
+        this.currentLocation = locationId;
 
-            // Hide map, show location panel
-            document.getElementById('map-grid').classList.add('hidden');
-            document.getElementById('location-panel').classList.remove('hidden');
+        // Hide map, show location panel
+        document.getElementById('map-grid').classList.add('hidden');
+        document.getElementById('location-panel').classList.remove('hidden');
 
-            // Set title
-            document.getElementById('location-title').textContent = `${loc.icon} ${loc.name}`;
+        // Set title
+        document.getElementById('location-title').textContent = `${loc.icon} ${loc.name}`;
 
-            // Render submenu
-            const submenuEl = document.getElementById('location-submenu');
-            submenuEl.innerHTML = '';
+        // Render submenu
+        const submenuEl = document.getElementById('location-submenu');
+        submenuEl.innerHTML = '';
 
-            loc.submenus.forEach(item => {
-                const menuItem = document.createElement('div');
-                menuItem.className = `submenu-item ${item.action === 'coming_soon' ? 'coming-soon' : ''}`;
+        loc.submenus.forEach(item => {
+            const menuItem = document.createElement('div');
+            menuItem.className = `submenu-item ${item.action === 'coming_soon' ? 'coming-soon' : ''}`;
 
-                menuItem.innerHTML = `
+            menuItem.innerHTML = `
                 <span class="icon">${item.icon}</span>
                 <span class="name">${item.name}</span>
                 ${item.action === 'coming_soon' ? '<span class="badge-soon">เร็วๆนี้</span>' : ''}
             `;
 
-                if (item.action !== 'coming_soon') {
-                    menuItem.addEventListener('click', () => {
-                        this.game.sound?.playClick();
-                        this.handleSubmenuAction(item);
-                    });
+            if (item.action !== 'coming_soon') {
+                menuItem.addEventListener('click', () => {
+                    this.game.sound?.playClick();
+                    this.handleSubmenuAction(item);
+                });
+            }
+
+            submenuEl.appendChild(menuItem);
+        });
+    }
+
+    backToMap() {
+        // Hide location panel, show map
+        document.getElementById('map-grid').classList.remove('hidden');
+        document.getElementById('location-panel').classList.add('hidden');
+        document.getElementById('sub-panels').classList.add('hidden');
+
+        // Hide all sub-panels
+        document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+
+        this.currentLocation = null;
+    }
+
+    handleSubmenuAction(item) {
+        const subPanels = document.getElementById('sub-panels');
+
+        switch (item.action) {
+            case 'activity':
+                // Do activity directly
+                if (this.game.activitySystem.doActivity(item.actionId)) {
+                    // Success
                 }
+                break;
 
-                submenuEl.appendChild(menuItem);
-            });
-        }
+            case 'custom_work':
+                this.toggleWorkAction();
+                break;
 
-        backToMap() {
-            // Hide location panel, show map
-            document.getElementById('map-grid').classList.remove('hidden');
-            document.getElementById('location-panel').classList.add('hidden');
-            document.getElementById('sub-panels').classList.add('hidden');
+            case 'custom_gigs':
+                this.doInstantGigAction();
+                break;
 
-            // Hide all sub-panels
-            document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
-
-            this.currentLocation = null;
-        }
-
-        handleSubmenuAction(item) {
-            const subPanels = document.getElementById('sub-panels');
-
-            switch (item.action) {
-                case 'activity':
-                    // Do activity directly
-                    if (this.game.activitySystem.doActivity(item.actionId)) {
-                        // Success
-                    }
-                    break;
-
-                case 'custom_work':
-                    this.toggleWorkAction();
-                    break;
-
-                case 'custom_gigs':
-                    this.doInstantGigAction();
-                    break;
-
-                case 'panel':
-                    // Show specific panel
-                    subPanels.classList.remove('hidden');
-                    document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
-                    const panel = document.getElementById(`panel-${item.panel}`);
-                    if (panel) {
-                        panel.classList.remove('hidden');
-
-                        // Re-render panel content
-                        switch (item.panel) {
-                            case 'housing': this.renderHousing(); break;
-                            case 'bank': this.renderBank(); break;
-                            case 'stocks': this.renderStocks(); break;
-                            case 'jobs': this.renderJobList(); break;
-                            case 'skills': this.renderSkills(); break;
-                            case 'courses': this.renderCourses(); break;
-                            case 'shop': this.renderShop(); break;
-                            case 'gigs': break; // Gigs loaded separately
-                            case 'furniture-shop': this.renderFurnitureShop(); break;
-                            case 'my-furniture': this.renderMyFurniture(); break;
-                        }
-                    }
-                    break;
-
-                case 'buy_item':
-                    // Quick buy item
-                    this.game.inventorySystem.buyItem(item.itemId);
-                    this.renderInventory();
-                    break;
-
-                case 'shop':
-                    // Show shop with category
-                    subPanels.classList.remove('hidden');
-                    document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
-                    document.getElementById('panel-shop')?.classList.remove('hidden');
-                    this.renderShop();
-                    break;
-
-                default:
-                    console.log('Unknown action:', item.action);
-            }
-        }
-
-        // Custom Action: Work Toggle
-        toggleWorkAction() {
-            if (this.game.jobSystem.isWorking) {
-                this.game.jobSystem.stopWork();
-                this.showToast('🛑 เลิกงานแล้ว');
-                return;
-            }
-
-            if (!this.game.jobSystem.currentJob || this.game.jobSystem.currentJob.id === 'unemployed') {
-                this.showToast('คุณยังไม่มีงานทำ! ไปสมัครงานก่อน');
-                const subPanels = document.getElementById('sub-panels');
+            case 'panel':
+                // Show specific panel
                 subPanels.classList.remove('hidden');
                 document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
-                document.getElementById('panel-jobs').classList.remove('hidden');
-                this.renderJobList();
-                return;
-            }
+                const panel = document.getElementById(`panel-${item.panel}`);
+                if (panel) {
+                    panel.classList.remove('hidden');
 
-            if (this.game.jobSystem.startWork()) {
-                this.showToast(`💼 เริ่มทำงาน: ${this.game.jobSystem.currentJob.title}`);
-            }
+                    // Re-render panel content
+                    switch (item.panel) {
+                        case 'housing': this.renderHousing(); break;
+                        case 'bank': this.renderBank(); break;
+                        case 'stocks': this.renderStocks(); break;
+                        case 'jobs': this.renderJobList(); break;
+                        case 'skills': this.renderSkills(); break;
+                        case 'courses': this.renderCourses(); break;
+                        case 'shop': this.renderShop(); break;
+                        case 'gigs': break; // Gigs loaded separately
+                        case 'furniture-shop': this.renderFurnitureShop(); break;
+                        case 'my-furniture': this.renderMyFurniture(); break;
+                    }
+                }
+                break;
+
+            case 'buy_item':
+                // Quick buy item
+                this.game.inventorySystem.buyItem(item.itemId);
+                this.renderInventory();
+                break;
+
+            case 'shop':
+                // Show shop with category
+                subPanels.classList.remove('hidden');
+                document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById('panel-shop')?.classList.remove('hidden');
+                this.renderShop();
+                break;
+
+            default:
+                console.log('Unknown action:', item.action);
         }
+    }
+
+    // Custom Action: Work Toggle
+    toggleWorkAction() {
+        if (this.game.jobSystem.isWorking) {
+            this.game.jobSystem.stopWork();
+            this.showToast('🛑 เลิกงานแล้ว');
+            return;
+        }
+
+        if (!this.game.jobSystem.currentJob || this.game.jobSystem.currentJob.id === 'unemployed') {
+            this.showToast('คุณยังไม่มีงานทำ! ไปสมัครงานก่อน');
+            const subPanels = document.getElementById('sub-panels');
+            subPanels.classList.remove('hidden');
+            document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById('panel-jobs').classList.remove('hidden');
+            this.renderJobList();
+            return;
+        }
+
+        if (this.game.jobSystem.startWork()) {
+            this.showToast(`💼 เริ่มทำงาน: ${this.game.jobSystem.currentJob.title}`);
+        }
+    }
 
     // Custom Action: Instant Gig
     async doInstantGigAction() {
-            if (this.game.player.energy < 15) {
-                this.showToast('⚡ พลังงานไม่พอสำหรับรับงานฟรีแลนซ์ (ต้องการ 15)');
+        if (this.game.player.energy < 15) {
+            this.showToast('⚡ พลังงานไม่พอสำหรับรับงานฟรีแลนซ์ (ต้องการ 15)');
+            return;
+        }
+
+        this.showToast("⏳ AI กำลังหางานให้...");
+
+        setTimeout(async () => {
+            // 5% chance slightly funny fail
+            if (Math.random() < 0.05) {
+                const fails = [
+                    "🤖 AI มึนตึ๊บ Error 404",
+                    "📶 เน็ตหลุดระหว่างส่งงาน",
+                    "💻 GPU ร้อนเกิน ขอพักก่อน",
+                    "😵 ลูกค้าเทงานซะงั้น"
+                ];
+                this.showToast(fails[Math.floor(Math.random() * fails.length)]);
                 return;
             }
 
-            this.showToast("⏳ AI กำลังหางานให้...");
-
-            setTimeout(async () => {
-                // 5% chance slightly funny fail
-                if (Math.random() < 0.05) {
-                    const fails = [
-                        "🤖 AI มึนตึ๊บ Error 404",
-                        "📶 เน็ตหลุดระหว่างส่งงาน",
-                        "💻 GPU ร้อนเกิน ขอพักก่อน",
-                        "😵 ลูกค้าเทงานซะงั้น"
-                    ];
-                    this.showToast(fails[Math.floor(Math.random() * fails.length)]);
-                    return;
+            try {
+                const gigs = await this.game.jobSystem.refreshGigs(this.game.eventSystem.aiService);
+                if (gigs && gigs.length > 0) {
+                    const gig = gigs[0];
+                    this.game.jobSystem.activeGig = gig;
+                    this.game.jobSystem.gigProgress = 0;
+                    this.game.jobSystem.isGigWorking = true;
+                    this.showToast(`⚡ รับงาน: ${gig.title} (รางวัล ${gig.reward}฿)`);
+                } else {
+                    this.showToast("🤖 AI หางานไม่เจอช่วงนี้");
                 }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 600);
+    }
 
-                try {
-                    const gigs = await this.game.jobSystem.refreshGigs(this.game.eventSystem.aiService);
-                    if (gigs && gigs.length > 0) {
-                        const gig = gigs[0];
-                        this.game.jobSystem.activeGig = gig;
-                        this.game.jobSystem.gigProgress = 0;
-                        this.game.jobSystem.isGigWorking = true;
-                        this.showToast(`⚡ รับงาน: ${gig.title} (รางวัล ${gig.reward}฿)`);
-                    } else {
-                        this.showToast("🤖 AI หางานไม่เจอช่วงนี้");
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            }, 600);
-        }
+    // ===================== FURNITURE UI =====================
 
-        // ===================== FURNITURE UI =====================
+    renderFurnitureShop() {
+        const listEl = document.getElementById('furniture-shop-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
 
-        renderFurnitureShop() {
-            const listEl = document.getElementById('furniture-shop-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
+        Object.values(FURNITURE).forEach(item => {
+            const owned = this.game.furnitureSystem.hasFurniture(item.id);
+            if (owned) return;
 
-            Object.values(FURNITURE).forEach(item => {
-                const owned = this.game.furnitureSystem.hasFurniture(item.id);
-                if (owned) return;
-
-                const el = document.createElement('div');
-                el.className = 'job-item-btn';
-                el.style.justifyContent = 'space-between';
-                el.innerHTML = `
+            const el = document.createElement('div');
+            el.className = 'job-item-btn';
+            el.style.justifyContent = 'space-between';
+            el.innerHTML = `
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:1.4rem;">${item.icon}</span>
@@ -1273,39 +1277,39 @@ export class UIManager {
                 <button class="buy-btn" style="min-width:80px;">${item.price.toLocaleString()}฿</button>
             `;
 
-                el.querySelector('button').addEventListener('click', () => {
-                    if (this.game.furnitureSystem.buy(item.id)) {
-                        this.renderFurnitureShop();
-                        this.renderMyFurniture();
-                        this.renderBank();
-                    }
-                });
-
-                listEl.appendChild(el);
+            el.querySelector('button').addEventListener('click', () => {
+                if (this.game.furnitureSystem.buy(item.id)) {
+                    this.renderFurnitureShop();
+                    this.renderMyFurniture();
+                    this.renderBank();
+                }
             });
 
-            if (listEl.children.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">คุณซื้อเฟอร์นิเจอร์หมดร้านแล้ว! 🛋️✨</div>';
-            }
+            listEl.appendChild(el);
+        });
+
+        if (listEl.children.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">คุณซื้อเฟอร์นิเจอร์หมดร้านแล้ว! 🛋️✨</div>';
+        }
+    }
+
+    renderMyFurniture() {
+        const listEl = document.getElementById('my-furniture-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        const items = this.game.furnitureSystem.getOwnedItems();
+        if (items.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">บ้านยังโล่งๆ นะ... ไปซื้อเฟอร์นิเจอร์ที่ห้างสิ!</div>';
+            return;
         }
 
-        renderMyFurniture() {
-            const listEl = document.getElementById('my-furniture-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-
-            const items = this.game.furnitureSystem.getOwnedItems();
-            if (items.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">บ้านยังโล่งๆ นะ... ไปซื้อเฟอร์นิเจอร์ที่ห้างสิ!</div>';
-                return;
-            }
-
-            items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'job-item-btn';
-                el.style.background = 'rgba(74, 222, 128, 0.1)';
-                el.style.border = '1px solid rgba(74, 222, 128, 0.3)';
-                el.innerHTML = `
+        items.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'job-item-btn';
+            el.style.background = 'rgba(74, 222, 128, 0.1)';
+            el.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+            el.innerHTML = `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:1.5rem;">${item.icon}</span>
                     <div>
@@ -1314,7 +1318,7 @@ export class UIManager {
                     </div>
                 </div>
             `;
-                listEl.appendChild(el);
-            });
-        }
+            listEl.appendChild(el);
+        });
     }
+}
