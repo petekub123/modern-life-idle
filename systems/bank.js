@@ -123,45 +123,51 @@ export class BankSystem {
 
     // เพิ่มเงินเข้าบัญชี (สำหรับขายหุ้น)
     addToBank(amount) {
-        this.balance += amount;
-    }
+        // ประมวลผลรายวัน (ดอกเบี้ยเงินฝาก + ดอกเบี้ยเงินกู้)
+        processDaily() {
+            // Process Daily Interest (Called by main loop)
+            if (this.balance > 0) {
+                const interest = Math.floor(this.balance * this.interestRate);
+                if (interest > 0) {
+                    this.balance += interest;
+                    this.game.ui.log(`📈/🏦 ดอกเบี้ยเงินฝาก +${interest}฿`);
+                }
+            }
 
-    // ประมวลผลรายวัน (ดอกเบี้ยเงินฝาก + ดอกเบี้ยเงินกู้)
-    processDaily() {
-        let interestEarned = 0;
-        let loanInterest = 0;
-
-        // ดอกเบี้ยเงินฝาก
-        if (this.balance > 0) {
-            interestEarned = Math.floor(this.balance * this.interestRate);
-            if (interestEarned > 0) {
-                this.balance += interestEarned;
-                this.game.ui.log(`💵 ดอกเบี้ยเงินฝาก +${interestEarned}฿`);
+            if (this.loan > 0) {
+                const interest = Math.ceil(this.loan * this.loanInterestRate);
+                if (interest > 0) {
+                    this.loan += interest;
+                    this.game.ui.log(`💸 ดอกเบี้ยเงินกู้เพิ่มขึ้น +${interest}฿`);
+                }
             }
         }
 
-        // ดอกเบี้ยเงินกู้
-        if (this.loan > 0) {
-            loanInterest = Math.floor(this.loan * this.loanInterestRate);
-            if (loanInterest > 0) {
-                this.loan += loanInterest;
-                this.game.ui.log(`📊 ดอกเบี้ยเงินกู้ +${loanInterest}฿`);
-            }
+        // Spend from bank balance directly (For Stocks/Investments)
+        spendFromBank(amount) {
+            if (amount <= 0) return false;
+            if (this.balance < amount) return false;
+
+            this.balance -= amount;
+            return true;
         }
 
-        return { interestEarned, loanInterest };
-    }
+        // Add to bank balance directly (For Dividends/Stock Sales)
+        addToBank(amount) {
+            if (amount <= 0) return;
+            this.balance += amount;
+        }
 
-    // เช็คว่ามีหนี้ไหม
-    hasDebt() {
-        return this.loan > 0;
-    }
+        // เช็คว่ามีหนี้ไหม
+        hasDebt() {
+            return this.loan > 0;
+        }
 
-    toJSON() {
-        return {
-            balance: this.balance,
-            loan: this.loan
-        };
+        toJSON() {
+            return {
+                balance: this.balance,
+                loan: this.loan
+            };
+        }
     }
-}
 
