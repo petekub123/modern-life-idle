@@ -144,6 +144,8 @@
                 <div class="settings-container">
                     <button id="btn-save" class="small-btn">💾 บันทึก</button>
                     <button id="btn-reset" class="small-btn danger">🗑️ เริ่มใหม่</button>
+                    <button id="btn-call-friend" class="small-btn" style="background:var(--accent);">📞
+                        โทรหาเพื่อน</button>
                 </div>
             </section>
         </main>
@@ -168,6 +170,37 @@
                 <!-- Details injected here -->
             </div>
             <button id="offline-close">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- Friend Call Modal -->
+    <div id="friend-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:350px;">
+            <div id="friend-status" style="text-align:center; padding:20px;">
+                <div style="font-size:3rem;">📞</div>
+                <p>กำลังโทร...</p>
+            </div>
+            <div id="friend-chat" class="hidden" style="padding:12px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                    <div
+                        style="width:40px; height:40px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                        👤</div>
+                    <div>
+                        <div id="friend-name" style="font-weight:bold; color:var(--accent);">เพื่อน</div>
+                        <div style="font-size:0.8rem; color:#888;">Online</div>
+                    </div>
+                </div>
+                <div id="friend-message"
+                    style="background:rgba(78,204,163,0.1); padding:12px; border-radius:12px; border-top-left-radius:0; margin-bottom:12px; line-height:1.5;">
+                </div>
+                <div id="friend-api-status" style="font-size:0.75rem; color:var(--success); text-align:center;">✅ AI
+                    เชื่อมต่อสำเร็จ</div>
+            </div>
+            <div id="friend-error" class="hidden" style="text-align:center; padding:20px; color:var(--stress);">
+                <div style="font-size:2rem;">❌</div>
+                <p id="friend-error-msg">เพื่อนไม่รับสาย</p>
+            </div>
+            <button id="friend-close" style="margin-top:12px;">วางสาย</button>
         </div>
     </div>
 

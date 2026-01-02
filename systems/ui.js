@@ -66,6 +66,23 @@ export class UIManager {
                 gigBtn.innerHTML = '<span class="icon">🔄</span><span class="name">หางานใหม่ AI Generate</span>';
             });
         }
+
+        // Call Friend Button (API Test)
+        const callFriendBtn = document.getElementById('btn-call-friend');
+        if (callFriendBtn) {
+            callFriendBtn.addEventListener('click', async () => {
+                this.game.sound?.playClick();
+                this.showFriendCall();
+            });
+        }
+
+        // Friend modal close button
+        const friendCloseBtn = document.getElementById('friend-close');
+        if (friendCloseBtn) {
+            friendCloseBtn.addEventListener('click', () => {
+                document.getElementById('friend-modal').classList.add('hidden');
+            });
+        }
     }
 
     renderShop() {
@@ -457,5 +474,47 @@ export class UIManager {
 
             container.appendChild(btn);
         });
+    }
+
+    async showFriendCall() {
+        const modal = document.getElementById('friend-modal');
+        const statusDiv = document.getElementById('friend-status');
+        const chatDiv = document.getElementById('friend-chat');
+        const errorDiv = document.getElementById('friend-error');
+        const nameEl = document.getElementById('friend-name');
+        const messageEl = document.getElementById('friend-message');
+        const errorMsgEl = document.getElementById('friend-error-msg');
+        const apiStatusEl = document.getElementById('friend-api-status');
+
+        // Reset state
+        statusDiv.classList.remove('hidden');
+        chatDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        modal.classList.remove('hidden');
+
+        // Play ring sound
+        this.game.sound?.playAlert();
+
+        // Call the AI
+        const result = await this.game.eventSystem.aiService.callFriend();
+
+        // Small delay for effect
+        await new Promise(r => setTimeout(r, 500));
+
+        statusDiv.classList.add('hidden');
+
+        if (result.success) {
+            // Success - show chat
+            nameEl.textContent = result.name;
+            messageEl.textContent = result.message;
+            apiStatusEl.innerHTML = '✅ AI เชื่อมต่อสำเร็จ';
+            chatDiv.classList.remove('hidden');
+            this.game.sound?.playSuccess();
+        } else {
+            // Error - show error
+            errorMsgEl.textContent = result.message || "เพื่อนไม่รับสาย";
+            errorDiv.classList.remove('hidden');
+            this.game.sound?.playError();
+        }
     }
 }

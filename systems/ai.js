@@ -162,4 +162,57 @@ export class AIService {
             return null;
         }
     }
+
+    // Test API by "calling a friend"
+    async callFriend() {
+        if (!CONFIG.AI_API_KEY) {
+            return { success: false, error: "NO_API_KEY", message: "ยังไม่ได้ตั้งค่า API Key" };
+        }
+
+        const player = this.game.player;
+        const prompt = `
+            You are a friendly AI character in a modern life game.
+            The player just called you on the phone. Respond with a short, casual message (1-2 sentences).
+            Be fun, supportive, or give a random life tip.
+            
+            Player status: Money ${player.money}฿, Stress ${player.stress}%, Energy ${player.energy}%
+            
+            Output JSON only: { "name": "friend name", "message": "your message" }
+        `;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.AI_MODEL}:generateContent?key=${CONFIG.AI_API_KEY}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error("API Response Error:", errText);
+                return { success: false, error: "API_ERROR", message: `API Error: ${response.status}` };
+            }
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) {
+                return { success: false, error: "NO_RESPONSE", message: "AI ไม่ตอบกลับ" };
+            }
+
+            const result = JSON.parse(text);
+            return {
+                success: true,
+                name: result.name || "เพื่อน",
+                message: result.message || "สวัสดี!"
+            };
+        } catch (error) {
+            console.error("AI Call Friend Error:", error);
+            return { success: false, error: "EXCEPTION", message: error.message };
+        }
+    }
 }
