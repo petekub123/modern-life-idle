@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Life: Idle RPG</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <header class="game-header">
+            <div>
+                <h1>Modern Life <span class="subtitle">Idle RPG</span></h1>
+                <div id="news-feed" class="news-ticker">📰 Connecting to world...</div>
+            </div>
+            <div id="clock-display" class="clock">Day 1 - 08:00</div>
+        </header>
+
+        <main class="game-container">
+            <!-- Left Column: Status -->
+            <section class="panel status-panel">
+                <h2>👤 สถานะตัวละคร</h2>
+                <div class="stat-group">
+                    <div class="stat-item money-stat">
+                        <span class="icon">💰</span>
+                        <div class="stat-info">
+                            <span class="label">เงินสด</span>
+                            <span id="money-val" class="value">0 ฿</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="label-row">
+                            <span>⚡ พลังงาน</span>
+                            <span id="energy-text">100/100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="energy-bar" class="fill energy" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar-container">
+                        <div class="label-row">
+                            <span>😖 ความเครียด</span>
+                            <span id="stress-text">0/100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="stress-bar" class="fill stress" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-bar-container">
+                        <div class="label-row">
+                            <span>❤️ สุขภาพ</span>
+                            <span id="health-text">100/100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="health-bar" class="fill health" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="job-status">
+                    <h3>🏢 งานปัจจุบัน</h3>
+                    <div id="current-job-info">
+                        <p class="job-title">ว่างงาน</p>
+                        <p class="job-income">รายได้: 0 ฿/วิ</p>
+                    </div>
+                    <div class="job-progress">
+                        <div id="work-progress-bar" class="fill work" style="width: 0%;"></div>
+                    </div>
+                    <p id="work-status-text" class="status-subtext">ไม่ได้ทำงาน</p>
+                </div>
+            </section>
+
+            <!-- Middle Column: Actions -->
+            <section class="panel action-panel">
+                <h2>🎮 กิจกรรม</h2>
+
+                <div class="action-category">
+                    <h3>🏠 พักผ่อน</h3>
+                    <div class="action-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="action-category">
+                    <h3>🏪 ร้านสะดวกซื้อ</h3>
+                    <div id="shop-list" class="action-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="action-category">
+                    <h3>🎒 กระเป๋าของฉัน</h3>
+                    <div id="inventory-list" class="action-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="action-category">
+                    <h3>💼 สมัครงาน</h3>
+                    <div id="job-list" class="action-list">
+                        <!-- Job buttons will be injected here -->
+                    </div>
+                </div>
+
+                <div class="action-category">
+                    <h3>⚡ งานฟรีแลนซ์ (AI)</h3>
+                    <button id="refresh-gigs-btn" class="action-btn"
+                        style="width:100%; margin-bottom:12px; justify-content:center;">
+                        <span class="icon">🔄</span>
+                        <span class="name">หางานใหม่ AI Generate</span>
+                    </button>
+                    <div id="gig-list" class="action-list">
+                        <div class="status-subtext" style="text-align:center; padding:10px;">กดปุ่มเพื่อหางาน...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Log & Inventory -->
+            <section class="panel misc-panel">
+                <div class="log-container">
+                    <h2>📝 บันทึกชีวิต</h2>
+                    <ul id="game-log" class="log-list">
+                        <li class="log-item">เริ่มเกมใหม่... ยินดีต้อนรับสู่ชีวิตจริง</li>
+                    </ul>
+                </div>
+
+                <div class="settings-container">
+                    <button id="btn-save" class="small-btn">💾 บันทึก</button>
+                    <button id="btn-reset" class="small-btn danger">🗑️ เริ่มใหม่</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">Title</h2>
+            <p id="modal-desc">Description</p>
+            <div id="modal-effects" class="modal-effects"></div>
+            <button id="modal-close">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- Offline Modal -->
+    <div id="offline-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>ยินดีต้อนรับกลับ!</h2>
+            <p>ขณะที่คุณไม่อยู่...</p>
+            <div id="offline-details" class="offline-details">
+                <!-- Details injected here -->
+            </div>
+            <button id="offline-close">ตกลง</button>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
