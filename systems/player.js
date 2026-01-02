@@ -66,9 +66,9 @@ export class Player {
     }
 
     regenerate() {
-        // Health Logic (not too harsh):
+        // Health Logic:
         // - High stress (>70) slowly damages health
-        // - Very low energy (<20) slowly damages health
+        // - Energy = 0 slowly damages health (exhaustion)
         // - Low stress (<30) and enough energy (>50) slowly heals
 
         const stress = this.stats.stress;
@@ -79,9 +79,9 @@ export class Player {
             this.modifyHealth(-0.5);
         }
 
-        // Exhaustion damage (0.3 per tick if energy < 20)
-        if (energy < 20) {
-            this.modifyHealth(-0.3);
+        // Exhaustion damage (0.5 per tick if energy = 0)
+        if (energy <= 0) {
+            this.modifyHealth(-0.5);
         }
 
         // Natural healing (0.2 per tick if stress < 30 and energy > 50)
