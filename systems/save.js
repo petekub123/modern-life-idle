@@ -14,6 +14,7 @@ export class SaveSystem {
             housing: this.game.housingSystem.toJSON(),
             bank: this.game.bankSystem.toJSON(),
             stocks: this.game.stockSystem.toJSON(),
+            furniture: this.game.furnitureSystem.toJSON(),
             timestamp: Date.now()
         };
         try {

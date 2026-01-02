@@ -6,12 +6,12 @@ export const LOCATIONS = {
         id: 'home',
         name: 'บ้าน',
         icon: '🏠',
-        description: 'พักผ่อน นอนหลับ ดูที่พัก',
+        description: 'พักผ่อน นอนหลับ ตกแต่งบ้าน',
         status: 'available',
         submenus: [
             { id: 'sleep', name: 'นอนหลับ', icon: '🛌', action: 'activity', actionId: 'sleep' },
             { id: 'relax', name: 'พักผ่อน', icon: '📺', action: 'activity', actionId: 'relax' },
-            { id: 'housing', name: 'ดูที่พักอาศัย', icon: '🏠', action: 'panel', panel: 'housing' }
+            { id: 'furniture', name: 'เฟอร์นิเจอร์ในบ้าน', icon: '🛋️', action: 'panel', panel: 'my-furniture' }
         ]
     },
     'office': {
@@ -21,8 +21,8 @@ export const LOCATIONS = {
         description: 'ทำงานประจำ งานฟรีแลนซ์ สมัครงาน',
         status: 'available',
         submenus: [
-            { id: 'work', name: 'ทำงานประจำ', icon: '💼', action: 'panel', panel: 'job-status' },
-            { id: 'gigs', name: 'งานฟรีแลนซ์ AI', icon: '⚡', action: 'panel', panel: 'gigs' },
+            { id: 'work', name: 'ทำงานประจำ', icon: '💼', action: 'custom_work' },
+            { id: 'gigs', name: 'งานฟรีแลนซ์ AI', icon: '⚡', action: 'custom_gigs' },
             { id: 'apply', name: 'สมัครงานใหม่', icon: '📋', action: 'panel', panel: 'jobs' }
         ]
     },
@@ -55,11 +55,12 @@ export const LOCATIONS = {
         id: 'mall',
         name: 'ห้างสรรพสินค้า',
         icon: '🏬',
-        description: 'ช้อปปิ้ง ซื้อของ ดูหนัง',
+        description: 'ช้อปปิ้ง ซื้อของ เฟอร์นิเจอร์',
         status: 'available',
         submenus: [
             { id: 'shopping', name: 'ช้อปปิ้งลดเครียด', icon: '🛍️', action: 'activity', actionId: 'shopping' },
             { id: 'shop', name: 'ซื้ออุปกรณ์', icon: '🛒', action: 'panel', panel: 'shop' },
+            { id: 'furniture', name: 'ร้านเฟอร์นิเจอร์', icon: '🛋️', action: 'panel', panel: 'furniture-shop' },
             { id: 'movie', name: 'ดูหนัง', icon: '🍿', action: 'coming_soon' }
         ]
     },

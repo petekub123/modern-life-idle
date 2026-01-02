@@ -4,6 +4,7 @@ import { ITEMS } from '../data/items.js';
 import { SKILLS, COURSES } from '../data/skills.js';
 import { PROPERTIES } from '../data/properties.js';
 import { LOCATIONS, LOCATION_ORDER } from '../data/locations.js';
+import { FURNITURE } from '../data/furniture.js';
 
 export class UIManager {
     constructor(game) {
@@ -233,81 +234,173 @@ export class UIManager {
     }
 
     renderJobList() {
+        // "Career Tree" UI
+        this.renderCareerHub();
+    }
+
+    renderCareerHub() {
         this.els.jobList.innerHTML = '';
+        const currentJob = this.game.jobSystem.currentJob;
 
-        // Sort jobs by tier
-        const sortedJobs = Object.values(JOBS)
-            .filter(job => job.id !== 'unemployed')
-            .sort((a, b) => a.tier - b.tier);
+        // Container for Tree View
+        const treeContainer = document.createElement('div');
+        treeContainer.style.display = 'flex';
+        treeContainer.style.flexDirection = 'column';
+        treeContainer.style.gap = '20px';
+        this.els.jobList.appendChild(treeContainer);
 
-        sortedJobs.forEach(job => {
-            const canApply = this.game.jobSystem.canApplyForJob(job.id);
-            const isCurrentJob = this.game.jobSystem.currentJobId === job.id;
+        // --- 1. Current Branch (Active Track) ---
+        const activeTrackDiv = document.createElement('div');
+        activeTrackDiv.className = 'career-track active-track';
+        activeTrackDiv.innerHTML = `
+            <div style="margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">
+                <span style="font-size:1.2rem;">📍 เส้นทางของคุณ: <span style="color:var(--accent-color)">${currentJob.track.toUpperCase()}</span></span>
+            </div>
+        `;
 
-            const btn = document.createElement('div');
-            btn.className = 'job-item-btn';
+        // Current Job Card
+        const currentCard = document.createElement('div');
+        currentCard.className = 'job-card current';
+        currentCard.style.background = 'rgba(78, 204, 163, 0.1)';
+        currentCard.style.border = '1px solid var(--success)';
+        currentCard.style.padding = '15px';
+        currentCard.style.borderRadius = '8px';
 
-            if (isCurrentJob) {
-                btn.classList.add('active-job');
-            }
+        let perkHtml = '';
+        if (currentJob.perk) {
+            perkHtml = `
+            <div style="margin-top:8px; padding:5px; background:rgba(255, 215, 0, 0.1); border:1px dashed gold; border-radius:4px;">
+                <span style="font-size:0.85rem; color:gold;">🌟 ความสามารถพิเศษ: ${currentJob.perk.desc}</span>
+            </div>`;
+        }
 
-            if (!canApply) {
-                btn.classList.add('locked');
-                btn.style.opacity = '0.6';
-            }
+        currentCard.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <strong>${currentJob.name} <span style="font-size:0.8em; color:#aaa;">(Tier ${currentJob.tier})</span></strong>
+                <span style="color:var(--success)">✅ ปัจจุบัน</span>
+            </div>
+            <div style="font-size:0.9rem; color:#ccc; margin-top:5px;">${currentJob.desc}</div>
+            <div style="font-size:0.9rem; color:#ccc;">รายได้: ${currentJob.incomePerSec}฿/วินาที</div>
+            ${perkHtml}
+        `;
+        activeTrackDiv.appendChild(currentCard);
 
-            // Build requirements text
-            let reqText = '';
-            if (job.requirements) {
-                const reqs = [];
-                if (job.requirements.money) {
-                    const hasMoney = this.game.player.money >= job.requirements.money;
-                    reqs.push(`💰 ${job.requirements.money.toLocaleString()}฿ ${hasMoney ? '✓' : ''}`);
-                }
-                if (job.requirements.daysWorked) {
-                    const hasDays = this.game.player.daysWorked >= job.requirements.daysWorked;
-                    reqs.push(`📅 ${job.requirements.daysWorked} วัน ${hasDays ? '✓' : ''}`);
-                }
-                reqText = reqs.join(' | ');
-            }
+        // Connector Arrow
+        const arrow = document.createElement('div');
+        arrow.style.textAlign = 'center';
+        arrow.style.fontSize = '1.5rem';
+        arrow.style.color = '#666';
+        arrow.style.margin = '5px 0';
+        arrow.innerText = '⬇️';
+        activeTrackDiv.appendChild(arrow);
 
-            btn.innerHTML = `
-                <div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:${canApply ? 'var(--accent)' : '#888'}; font-size:0.7rem;">Tier ${job.tier}</span>
-                        <strong>${job.name}</strong>
-                        ${isCurrentJob ? '<span style="color:var(--success); font-size:0.8rem;">✓ ปัจจุบัน</span>' : ''}
-                    </div>
-                    <div style="font-size:0.8em; color: #aaa;">${job.desc}</div>
-                    ${reqText ? `<div style="font-size:0.7em; color: ${canApply ? 'var(--success)' : 'var(--stress)'}; margin-top:4px;">${canApply ? '✅ ปลดล็อคแล้ว' : '🔒 ' + reqText}</div>` : ''}
+        // Next Job (Promotion Target)
+        const nextJob = this.game.jobSystem.getNextJobInTrack();
+        if (nextJob) {
+            const check = this.game.jobSystem.checkRequirements(nextJob);
+            const promoCard = document.createElement('div');
+            promoCard.className = 'job-card next';
+            promoCard.style.background = 'rgba(255, 255, 255, 0.05)';
+            promoCard.style.border = '1px dashed #666';
+            promoCard.style.padding = '15px';
+            promoCard.style.borderRadius = '8px';
+
+            let reqHtml = check.reasons.length > 0
+                ? `<div style="color:#e94560; font-size:0.9rem; margin-top:10px;">⚠️ เงื่อนไข: ${check.reasons.join(', ')}</div>`
+                : `<div style="color:var(--success); font-size:0.9rem; margin-top:10px;">✅ เงื่อนไขครบ พร้อมเลื่อนขั้น!</div>`;
+
+            promoCard.innerHTML = `
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${nextJob.name} <span style="font-size:0.8em; color:#aaa;">(Tier ${nextJob.tier})</span></strong>
+                    <span style="color:#aaa">🎯 เป้าหมายถัดไป</span>
                 </div>
-                <div style="text-align:right">
-                    <div style="font-weight:bold; color:var(--success)">+${job.incomePerSec}฿/วิ</div>
-                    <div style="font-size:0.8em; color: var(--energy);">-${job.energyCostPerSec}⚡</div>
-                </div>
+                <div style="font-size:0.9rem; color:#ccc; margin-top:5px;">${nextJob.desc}</div>
+                <div style="font-size:0.9rem; color:var(--success);">+${nextJob.incomePerSec}฿/วินาที</div>
+                ${reqHtml}
             `;
 
-            btn.addEventListener('click', () => {
-                this.game.sound?.playClick();
-                if (canApply) {
-                    // Toggle: if clicking current job while working, stop
-                    if (isCurrentJob && this.game.jobSystem.isWorking) {
-                        this.game.jobSystem.stopWork();
-                        this.log(`☕ หยุดพักจากงาน: ${job.name}`);
-                        this.renderJobList();
-                        this.updateTags();
-                    } else if (this.game.jobSystem.setJob(job.id)) {
-                        this.log(`คุณเริ่มทำงาน: ${job.name}`);
-                        this.renderJobList(); // Re-render to update active state
-                        this.updateTags();
+            if (check.can) {
+                const btn = document.createElement('button');
+                btn.className = 'action-btn'; // reuse
+                btn.style.width = '100%';
+                btn.style.marginTop = '10px';
+                btn.style.background = 'var(--accent-color)';
+                btn.innerText = '🎉 เลื่อนตำแหน่ง (Promotion)';
+                btn.onclick = () => {
+                    if (this.game.jobSystem.promote()) {
+                        this.renderCareerHub();
+                        this.renderBank();
                     }
-                } else {
-                    this.showToast("ยังไม่ได้ปลดล็อคงานนี้!");
-                    this.game.sound?.playError();
-                }
-            });
-            this.els.jobList.appendChild(btn);
+                };
+                promoCard.appendChild(btn);
+            }
+
+            activeTrackDiv.appendChild(promoCard);
+        } else {
+            // Max Level
+            const maxCard = document.createElement('div');
+            maxCard.style.textAlign = 'center';
+            maxCard.style.padding = '10px';
+            maxCard.style.color = 'gold';
+            maxCard.innerHTML = '👑 สูงสุดของสายอาชีพนี้แล้ว!';
+            activeTrackDiv.appendChild(maxCard);
+        }
+
+        treeContainer.appendChild(activeTrackDiv);
+
+        // --- 2. Other Branches (Switch Track) ---
+        const otherTracksDiv = document.createElement('div');
+        otherTracksDiv.innerHTML = `<h4 style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">🌐 เริ่มต้นสายอาชีพอื่น (Talent Tree)</h4>`;
+
+        // Find entry jobs (Tier 1) of OTHER tracks
+        const jobs = Object.values(JOBS);
+        const startJobs = {};
+        jobs.filter(j => j.tier === 1 && j.track !== currentJob.track).forEach(j => {
+            if (!startJobs[j.track]) startJobs[j.track] = j;
         });
+
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = '1fr 1fr';
+        grid.style.gap = '10px';
+
+        Object.values(startJobs).forEach(job => {
+            const check = this.game.jobSystem.checkRequirements(job);
+            const card = document.createElement('div');
+            card.className = 'job-item-btn';
+            card.style.display = 'block';
+            card.style.opacity = check.can ? '1' : '0.7';
+
+            card.innerHTML = `
+                <div style="font-weight:bold; margin-bottom:5px;">
+                    ${job.track === 'tech' ? '💻' : job.track === 'creative' ? '🎨' : '💼'} ${job.name}
+                </div>
+                <div style="font-size:0.8rem; color:#aaa;">${job.desc}</div>
+                <div style="font-size:0.8rem; color:var(--success); margin-top:5px;">รายได้: ${job.incomePerSec}฿/วิ</div>
+                ${!check.can ? `<div style="font-size:0.75rem; color:#e94560;">ติดเงื่อนไข: ${check.reasons[0]}</div>` : ''}
+            `;
+
+            if (check.can) {
+                const btn = document.createElement('button');
+                btn.innerText = 'ย้ายสาย';
+                btn.className = 'buy-btn';
+                btn.style.width = '100%';
+                btn.style.marginTop = '8px';
+                btn.style.fontSize = '0.8rem';
+                btn.onclick = () => {
+                    if (confirm(`ย้ายไปสาย ${job.name}?\n⚠️ ตำแหน่งปัจจุบันจะถูกรีเซ็ต!`)) {
+                        this.game.jobSystem.switchJob(job.id);
+                        this.renderCareerHub();
+                    }
+                };
+                card.appendChild(btn);
+            }
+
+            grid.appendChild(card);
+        });
+
+        otherTracksDiv.appendChild(grid);
+        treeContainer.appendChild(otherTracksDiv);
     }
 
     update(deltaTime) {
@@ -1011,7 +1104,17 @@ export class UIManager {
         switch (item.action) {
             case 'activity':
                 // Do activity directly
-                this.game.activitySystem.doActivity(item.actionId);
+                if (this.game.activitySystem.doActivity(item.actionId)) {
+                    // Success
+                }
+                break;
+
+            case 'custom_work':
+                this.toggleWorkAction();
+                break;
+
+            case 'custom_gigs':
+                this.doInstantGigAction();
                 break;
 
             case 'panel':
@@ -1032,6 +1135,8 @@ export class UIManager {
                         case 'courses': this.renderCourses(); break;
                         case 'shop': this.renderShop(); break;
                         case 'gigs': break; // Gigs loaded separately
+                        case 'furniture-shop': this.renderFurnitureShop(); break;
+                        case 'my-furniture': this.renderMyFurniture(); break;
                     }
                 }
                 break;
@@ -1053,5 +1158,139 @@ export class UIManager {
             default:
                 console.log('Unknown action:', item.action);
         }
+    }
+
+    // Custom Action: Work Toggle
+    toggleWorkAction() {
+        if (this.game.jobSystem.isWorking) {
+            this.game.jobSystem.stopWork();
+            this.showToast('🛑 เลิกงานแล้ว');
+            return;
+        }
+
+        if (!this.game.jobSystem.currentJob || this.game.jobSystem.currentJob.id === 'unemployed') {
+            this.showToast('คุณยังไม่มีงานทำ! ไปสมัครงานก่อน');
+            const subPanels = document.getElementById('sub-panels');
+            subPanels.classList.remove('hidden');
+            document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById('panel-jobs').classList.remove('hidden');
+            this.renderJobList();
+            return;
+        }
+
+        if (this.game.jobSystem.startWork()) {
+            this.showToast(`💼 เริ่มทำงาน: ${this.game.jobSystem.currentJob.title}`);
+        }
+    }
+
+    // Custom Action: Instant Gig
+    async doInstantGigAction() {
+        if (this.game.player.energy < 15) {
+            this.showToast('⚡ พลังงานไม่พอสำหรับรับงานฟรีแลนซ์ (ต้องการ 15)');
+            return;
+        }
+
+        this.showToast("⏳ AI กำลังหางานให้...");
+
+        setTimeout(async () => {
+            // 5% chance slightly funny fail
+            if (Math.random() < 0.05) {
+                const fails = [
+                    "🤖 AI มึนตึ๊บ Error 404",
+                    "📶 เน็ตหลุดระหว่างส่งงาน",
+                    "💻 GPU ร้อนเกิน ขอพักก่อน",
+                    "😵 ลูกค้าเทงานซะงั้น"
+                ];
+                this.showToast(fails[Math.floor(Math.random() * fails.length)]);
+                return;
+            }
+
+            try {
+                const gigs = await this.game.jobSystem.refreshGigs(this.game.eventSystem.aiService);
+                if (gigs && gigs.length > 0) {
+                    const gig = gigs[0];
+                    this.game.jobSystem.activeGig = gig;
+                    this.game.jobSystem.gigProgress = 0;
+                    this.game.jobSystem.isGigWorking = true;
+                    this.showToast(`⚡ รับงาน: ${gig.title} (รางวัล ${gig.reward}฿)`);
+                } else {
+                    this.showToast("🤖 AI หางานไม่เจอช่วงนี้");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 600);
+    }
+
+    // ===================== FURNITURE UI =====================
+
+    renderFurnitureShop() {
+        const listEl = document.getElementById('furniture-shop-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        Object.values(FURNITURE).forEach(item => {
+            const owned = this.game.furnitureSystem.hasFurniture(item.id);
+            if (owned) return;
+
+            const el = document.createElement('div');
+            el.className = 'job-item-btn';
+            el.style.justifyContent = 'space-between';
+            el.innerHTML = `
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.4rem;">${item.icon}</span>
+                        <div>
+                            <div style="font-weight:bold;">${item.name}</div>
+                            <div style="font-size:0.8rem; color:#aaa;">${item.desc}</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="buy-btn" style="min-width:80px;">${item.price.toLocaleString()}฿</button>
+            `;
+
+            el.querySelector('button').addEventListener('click', () => {
+                if (this.game.furnitureSystem.buy(item.id)) {
+                    this.renderFurnitureShop();
+                    this.renderMyFurniture();
+                    this.renderBank();
+                }
+            });
+
+            listEl.appendChild(el);
+        });
+
+        if (listEl.children.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">คุณซื้อเฟอร์นิเจอร์หมดร้านแล้ว! 🛋️✨</div>';
+        }
+    }
+
+    renderMyFurniture() {
+        const listEl = document.getElementById('my-furniture-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        const items = this.game.furnitureSystem.getOwnedItems();
+        if (items.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">บ้านยังโล่งๆ นะ... ไปซื้อเฟอร์นิเจอร์ที่ห้างสิ!</div>';
+            return;
+        }
+
+        items.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'job-item-btn';
+            el.style.background = 'rgba(74, 222, 128, 0.1)';
+            el.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+            el.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5rem;">${item.icon}</span>
+                    <div>
+                        <div style="font-weight:bold; color:var(--text-primary);">${item.name}</div>
+                        <div style="font-size:0.8rem; color:var(--success);">${item.desc}</div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(el);
+        });
     }
 }

@@ -11,6 +11,7 @@ import { SkillSystem } from './systems/skill.js';
 import { HousingSystem } from './systems/housing.js';
 import { BankSystem } from './systems/bank.js';
 import { StockSystem } from './systems/stock.js';
+import { FurnitureSystem } from './systems/furniture.js';
 
 class Game {
     constructor() {
@@ -25,6 +26,7 @@ class Game {
         this.housingSystem = new HousingSystem(this);
         this.bankSystem = new BankSystem(this);
         this.stockSystem = new StockSystem(this);
+        this.furnitureSystem = new FurnitureSystem(this);
         this.ui = new UIManager(this);
         this.saveSystem = new SaveSystem(this);
         this.sound = new SoundManager();
@@ -48,6 +50,7 @@ class Game {
             this.housingSystem.load(savedData.housing);
             this.bankSystem.load(savedData.bank);
             this.stockSystem.load(savedData.stocks);
+            this.furnitureSystem.load(savedData.furniture);
 
             // Calculate offline progress
             const offlineSeconds = this.timeSystem.getOfflineSeconds();
@@ -143,8 +146,19 @@ class Game {
     }
 
     processDailyExpenses() {
-        const expenses = this.housingSystem.getDailyExpenses();
-        const paid = this.player.spendMoney(expenses);
+        console.log("Processing daily expenses...");
+        // Bank Daily Interest
+        this.bankSystem.processDaily();
+
+        // Stock Market Dividend
+        this.stockSystem.processDividends();
+
+        // Process Daily Rent/Lifestyle Costs
+        const baseExpenses = this.housingSystem.getDailyExpenses();
+        const furnitureReduction = this.furnitureSystem.processDaily(); // Returns expense reduction
+        const finalExpenses = Math.max(0, baseExpenses - furnitureReduction);
+
+        const paid = this.player.spendMoney(finalExpenses);
 
         // Track work days
         if (this.jobSystem.isWorking && this.jobSystem.currentJobId !== 'unemployed') {

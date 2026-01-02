@@ -37,14 +37,92 @@ export class JobSystem {
     }
 
     setJob(jobId) {
+        // Legacy support or direct set
         const job = JOBS[jobId];
-        if (job && this.canApplyForJob(jobId)) {
+        if (job) {
             this.currentJobId = jobId;
             this.workProgress = 0;
-            this.isWorking = true;
+            this.isWorking = false;
             return true;
         }
         return false;
+    }
+
+    // --- Career Track Logic ---
+
+    getNextJobInTrack() {
+        if (!this.currentJobId) return null;
+        const current = this.currentJob;
+        // Find job with same track and next tier
+        return Object.values(JOBS).find(j => j.track === current.track && j.tier === current.tier + 1);
+    }
+
+    canPromote() {
+        const nextJob = this.getNextJobInTrack();
+        if (!nextJob) return { can: false, reason: 'Max Level' };
+
+        return this.checkRequirements(nextJob);
+    }
+
+    checkRequirements(job) {
+        if (!job.requirements && !job.reqSkill) return { can: true };
+
+        const reasons = [];
+
+        // Money
+        if (job.requirements?.money && this.player.money < job.requirements.money) {
+            reasons.push(`เงินเก็บ: ${this.player.money}/${job.requirements.money}`);
+        }
+
+        // Days Worked
+        if (job.requirements?.daysWorked && this.player.daysWorked < job.requirements.daysWorked) {
+            reasons.push(`อายุงาน: ${this.player.daysWorked}/${job.requirements.daysWorked} วัน`);
+        }
+
+        // Skill
+        if (job.reqSkill) {
+            const skillLevel = this.player.game.skillSystem.getSkillLevel(job.reqSkill.id);
+            if (skillLevel < job.reqSkill.level) {
+                reasons.push(`${this.player.game.skillSystem.getSkillName(job.reqSkill.id)} Lv.${job.reqSkill.level}`);
+            }
+        }
+
+        return {
+            can: reasons.length === 0,
+            reasons: reasons
+        };
+    }
+
+    promote() {
+        const check = this.canPromote();
+        if (!check.can) return false;
+
+        const nextJob = this.getNextJobInTrack();
+        if (nextJob) {
+            this.currentJobId = nextJob.id;
+            this.isWorking = false; // Stop working to celebrate
+            this.player.game.ui.showEventModal({
+                title: '🎉 เลื่อนตำแหน่ง! 🎉',
+                desc: `ยินดีด้วย! คุณได้รับการเลื่อนขั้นเป็น ${nextJob.name}\nรายได้เพิ่มเป็น ${nextJob.incomePerSec}฿/วินาที`,
+                effects: {}
+            });
+            return true;
+        }
+        return false;
+    }
+
+    switchJob(targetJobId) {
+        const job = JOBS[targetJobId];
+        if (!job) return false;
+
+        // Verify requirements again just in case
+        const check = this.checkRequirements(job);
+        if (!check.can) return false;
+
+        this.currentJobId = targetJobId;
+        this.isWorking = false;
+        this.player.game.ui.showToast(`ย้ายสายงานไปเป็น ${job.name} แล้ว!`);
+        return true;
     }
 
     stopWork() {
@@ -71,12 +149,43 @@ export class JobSystem {
         if (!this.currentJobId || !this.isWorking) return;
 
         const job = this.currentJob;
+        const perk = job.perk || {};
 
-        if (this.player.energy >= job.energyCostPerSec) {
-            this.player.modifyEnergy(-job.energyCostPerSec);
-            this.player.modifyStress(job.stressPerSec);
+        // Calculate Costs with Perks
+        let energyCost = job.energyCostPerSec;
+        let stressCost = job.stressPerSec;
+
+        if (perk.type === 'energy_reduction') {
+            energyCost *= (1 - perk.value);
+        }
+        if (perk.type === 'stress_reduction') {
+            stressCost *= (1 - perk.value);
+        }
+
+        if (this.player.energy >= energyCost) {
+            this.player.modifyEnergy(-energyCost);
+            this.player.modifyStress(stressCost);
 
             let income = job.incomePerSec;
+
+            // Perk: Viral Luck (Online)
+            if (perk.type === 'viral_luck') {
+                if (Math.random() < perk.chance) {
+                    income *= perk.multiplier;
+                    // Optional: Visual cue for viral hit?
+                    // if (this.player.game.ui) this.player.game.ui.showFloatingText('Viral! x' + perk.multiplier);
+                }
+            }
+
+            // Perk: Tips (Delivery)
+            if (perk.type === 'tips') {
+                this.tickCount = (this.tickCount || 0) + 1;
+                if (this.tickCount % perk.interval === 0) {
+                    const bonus = income * perk.bonusRatio;
+                    income += bonus;
+                    // if (this.player.game.ui) this.player.game.ui.showFloatingText('Tip! +' + Math.floor(bonus));
+                }
+            }
 
             // Equipment Bonuses
             if (this.player.game && this.player.game.inventorySystem) {
@@ -86,6 +195,12 @@ export class JobSystem {
             // Skill Bonuses
             if (this.player.game && this.player.game.skillSystem) {
                 income *= this.player.game.skillSystem.getSkillIncomeMultiplier();
+
+                // --- On-the-Job Training Logic ---
+                // Gain 1 XP per tick (approx 1 XP/sec) for the required skill
+                if (job.reqSkill) {
+                    this.player.game.skillSystem.addSkillXP(job.reqSkill.id, 1);
+                }
             }
 
             // Stress Penalty: If stress > 80, income reduced by 50%
@@ -120,7 +235,13 @@ export class JobSystem {
 
         if (workableSeconds <= 0) return { money: 0 };
 
-        const moneyEarned = workableSeconds * job.incomePerSec;
+        let moneyEarned = workableSeconds * job.incomePerSec;
+
+        // Perk: Tech Automation (Offline Bonus)
+        if (job.perk && job.perk.type === 'automation') {
+            moneyEarned *= (1 + job.perk.value);
+        }
+
         const energyConsumed = workableSeconds * job.energyCostPerSec;
         const stressInc = workableSeconds * job.stressPerSec;
 

@@ -35,4 +35,9 @@ export class ActivitySystem {
 
         return true;
     }
+
+    // Alias for map navigation system
+    doActivity(activityId) {
+        return this.perform(activityId);
+    }
 }
