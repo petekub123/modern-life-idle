@@ -9,7 +9,8 @@ export class Player {
             health: 100,
             maxHealth: 100,
             xp: 0,
-            level: 1
+            level: 1,
+            daysWorked: 0 // Total days worked for career progression
         };
     }
 
@@ -24,6 +25,11 @@ export class Player {
     get maxEnergy() { return this.stats.maxEnergy; }
     get stress() { return this.stats.stress; }
     get health() { return this.stats.health; }
+    get daysWorked() { return this.stats.daysWorked; }
+
+    addDayWorked() {
+        this.stats.daysWorked++;
+    }
 
     addMoney(amount) {
         this.stats.money += amount;

@@ -154,25 +154,71 @@ export class UIManager {
 
     renderJobList() {
         this.els.jobList.innerHTML = '';
-        Object.values(JOBS).forEach(job => {
-            if (job.id === 'unemployed') return;
+
+        // Sort jobs by tier
+        const sortedJobs = Object.values(JOBS)
+            .filter(job => job.id !== 'unemployed')
+            .sort((a, b) => a.tier - b.tier);
+
+        sortedJobs.forEach(job => {
+            const canApply = this.game.jobSystem.canApplyForJob(job.id);
+            const isCurrentJob = this.game.jobSystem.currentJobId === job.id;
 
             const btn = document.createElement('div');
             btn.className = 'job-item-btn';
+
+            if (isCurrentJob) {
+                btn.classList.add('active-job');
+            }
+
+            if (!canApply) {
+                btn.classList.add('locked');
+                btn.style.opacity = '0.6';
+            }
+
+            // Build requirements text
+            let reqText = '';
+            if (job.requirements) {
+                const reqs = [];
+                if (job.requirements.money) {
+                    const hasMoney = this.game.player.money >= job.requirements.money;
+                    reqs.push(`💰 ${job.requirements.money.toLocaleString()}฿ ${hasMoney ? '✓' : ''}`);
+                }
+                if (job.requirements.daysWorked) {
+                    const hasDays = this.game.player.daysWorked >= job.requirements.daysWorked;
+                    reqs.push(`📅 ${job.requirements.daysWorked} วัน ${hasDays ? '✓' : ''}`);
+                }
+                reqText = reqs.join(' | ');
+            }
+
             btn.innerHTML = `
                 <div>
-                    <strong>${job.name}</strong>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:${canApply ? 'var(--accent)' : '#888'}; font-size:0.7rem;">Tier ${job.tier}</span>
+                        <strong>${job.name}</strong>
+                        ${isCurrentJob ? '<span style="color:var(--success); font-size:0.8rem;">✓ ปัจจุบัน</span>' : ''}
+                    </div>
                     <div style="font-size:0.8em; color: #aaa;">${job.desc}</div>
+                    ${reqText ? `<div style="font-size:0.7em; color: ${canApply ? 'var(--success)' : 'var(--stress)'}; margin-top:4px;">${canApply ? '✅ ปลดล็อคแล้ว' : '🔒 ' + reqText}</div>` : ''}
                 </div>
                 <div style="text-align:right">
-                    <div>+${job.incomePerSec}฿/วิ</div>
-                    <div style="font-size:0.8em; color: #e94560;">-${job.energyCostPerSec}⚡</div>
+                    <div style="font-weight:bold; color:var(--success)">+${job.incomePerSec}฿/วิ</div>
+                    <div style="font-size:0.8em; color: var(--energy);">-${job.energyCostPerSec}⚡</div>
                 </div>
             `;
+
             btn.addEventListener('click', () => {
-                this.game.jobSystem.setJob(job.id);
-                this.log(`คุณเริ่มทำงาน: ${job.name}`);
-                this.updateTags();
+                this.game.sound?.playClick();
+                if (canApply) {
+                    if (this.game.jobSystem.setJob(job.id)) {
+                        this.log(`คุณเริ่มทำงาน: ${job.name}`);
+                        this.renderJobList(); // Re-render to update active state
+                        this.updateTags();
+                    }
+                } else {
+                    this.showToast("ยังไม่ได้ปลดล็อคงานนี้!");
+                    this.game.sound?.playError();
+                }
             });
             this.els.jobList.appendChild(btn);
         });

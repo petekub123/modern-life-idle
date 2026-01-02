@@ -95,6 +95,11 @@ class Game {
         const expenses = 300; // Fixed for now: Food + Transport + Rent
         const paid = this.player.spendMoney(expenses);
 
+        // Track work days
+        if (this.jobSystem.isWorking && this.jobSystem.currentJobId !== 'unemployed') {
+            this.player.addDayWorked();
+        }
+
         if (paid) {
             this.ui.log(`🌞 เช้าวันใหม่! จ่ายค่าครองชีพ ${expenses} ฿`);
         } else {
@@ -103,6 +108,10 @@ class Game {
             this.player.modifyStress(20);
             this.ui.log(`⚠️ เงินไม่พอจ่ายค่าครองชีพ! (${expenses} ฿) ความเครียดเพิ่มขึ้น!`);
         }
+
+        // Refresh job list to update unlock status
+        this.ui.renderJobList();
+
         this.saveSystem.save();
     }
 

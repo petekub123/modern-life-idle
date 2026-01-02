@@ -23,8 +23,22 @@ export class JobSystem {
         return JOBS[this.currentJobId];
     }
 
+    // Check if player meets job requirements
+    canApplyForJob(jobId) {
+        const job = JOBS[jobId];
+        if (!job) return false;
+        if (!job.requirements) return true; // No requirements = always available
+
+        const reqs = job.requirements;
+        if (reqs.money && this.player.money < reqs.money) return false;
+        if (reqs.daysWorked && this.player.daysWorked < reqs.daysWorked) return false;
+        // Future: can add skill requirements here
+        return true;
+    }
+
     setJob(jobId) {
-        if (JOBS[jobId]) {
+        const job = JOBS[jobId];
+        if (job && this.canApplyForJob(jobId)) {
             this.currentJobId = jobId;
             this.workProgress = 0;
             this.isWorking = true;
