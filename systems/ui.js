@@ -239,7 +239,13 @@ export class UIManager {
             btn.addEventListener('click', () => {
                 this.game.sound?.playClick();
                 if (canApply) {
-                    if (this.game.jobSystem.setJob(job.id)) {
+                    // Toggle: if clicking current job while working, stop
+                    if (isCurrentJob && this.game.jobSystem.isWorking) {
+                        this.game.jobSystem.stopWork();
+                        this.log(`☕ หยุดพักจากงาน: ${job.name}`);
+                        this.renderJobList();
+                        this.updateTags();
+                    } else if (this.game.jobSystem.setJob(job.id)) {
                         this.log(`คุณเริ่มทำงาน: ${job.name}`);
                         this.renderJobList(); // Re-render to update active state
                         this.updateTags();

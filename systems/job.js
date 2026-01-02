@@ -47,7 +47,27 @@ export class JobSystem {
         return false;
     }
 
+    stopWork() {
+        this.isWorking = false;
+    }
+
+    // Check and warn about high stress
+    checkStressWarning() {
+        if (this.player.stress >= 90 && this.isWorking && !this.stressWarned) {
+            this.stressWarned = true;
+            if (this.player.game && this.player.game.ui) {
+                this.player.game.ui.showToast('⚠️ เครียดมาก! ควรหยุดพักก่อนจะป่วย!');
+                this.player.game.ui.log('⚠️ ความเครียดสูงมาก! พักเถอะ!');
+            }
+        } else if (this.player.stress < 80) {
+            this.stressWarned = false;
+        }
+    }
+
     tick() {
+        // Check stress warning
+        this.checkStressWarning();
+
         if (!this.currentJobId || !this.isWorking) return;
 
         const job = this.currentJob;
