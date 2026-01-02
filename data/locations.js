@@ -22,7 +22,6 @@ export const LOCATIONS = {
         status: 'available',
         submenus: [
             { id: 'work', name: 'ทำงานประจำ', icon: '💼', action: 'custom_work' },
-            { id: 'gigs', name: 'งานฟรีแลนซ์ AI', icon: '⚡', action: 'custom_gigs' },
             { id: 'apply', name: 'สมัครงานใหม่', icon: '📋', action: 'panel', panel: 'jobs' }
         ]
     },
@@ -59,7 +58,6 @@ export const LOCATIONS = {
         status: 'available',
         submenus: [
             { id: 'shopping', name: 'ช้อปปิ้งลดเครียด', icon: '🛍️', action: 'activity', actionId: 'shopping' },
-            { id: 'shop', name: 'ร้านสะดวกซื้อ', icon: '🛒', action: 'panel', panel: 'shop' },
             { id: 'furniture', name: 'ร้านเฟอร์นิเจอร์', icon: '🛋️', action: 'panel', panel: 'furniture-shop' },
             { id: 'movie', name: 'ดูหนัง', icon: '🍿', action: 'coming_soon' }
         ]
@@ -83,9 +81,7 @@ export const LOCATIONS = {
         description: 'ซื้อกาแฟ ขนม เครื่องดื่ม',
         status: 'available',
         submenus: [
-            { id: 'coffee', name: 'ซื้อกาแฟ', icon: '☕', action: 'buy_item', itemId: 'coffee' },
-            { id: 'energy', name: 'เครื่องดื่มชูกำลัง', icon: '⚡', action: 'buy_item', itemId: 'energy_drink' },
-            { id: 'book', name: 'หนังสือลดเครียด', icon: '📚', action: 'buy_item', itemId: 'book_relax' }
+            { id: 'shop', name: 'เลือกซื้อสินค้า', icon: '🛒', action: 'panel', panel: 'shop' }
         ]
     },
     'casino': {

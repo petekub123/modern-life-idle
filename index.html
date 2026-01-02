@@ -176,18 +176,7 @@
                         </div>
                     </div>
 
-                    <div id="panel-gigs" class="sub-panel hidden">
-                        <h4>⚡ งานฟรีแลนซ์ (AI)</h4>
-                        <button id="refresh-gigs-btn" class="action-btn"
-                            style="width:100%; margin-bottom:12px; justify-content:center;">
-                            <span class="icon">🔄</span>
-                            <span class="name">หางานใหม่ AI Generate</span>
-                        </button>
-                        <div id="gig-list" class="action-list">
-                            <div class="status-subtext" style="text-align:center; padding:10px;">กดปุ่มเพื่อหางาน...
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div id="panel-furniture-shop" class="sub-panel hidden">
                         <h4>🛋️ ร้านเฟอร์นิเจอร์</h4>
@@ -215,10 +204,20 @@
                 </div>
 
                 <div class="settings-container">
-                    <button id="btn-save" class="small-btn">💾 บันทึก</button>
-                    <button id="btn-reset" class="small-btn danger">🗑️ เริ่มใหม่</button>
-                    <button id="btn-call-friend" class="small-btn" style="background:var(--accent);">📞
-                        โทรหาเพื่อน</button>
+                    <div class="settings-grid">
+                        <button id="btn-save" class="system-btn">
+                            <span class="icon">💾</span>
+                            <span class="label">บันทึก</span>
+                        </button>
+                        <button id="btn-reset" class="system-btn danger">
+                            <span class="icon">🗑️</span>
+                            <span class="label">เริ่มใหม่</span>
+                        </button>
+                        <button id="btn-call-friend" class="system-btn primary">
+                            <span class="icon">📞</span>
+                            <span class="label">โทรหาเพื่อน</span>
+                        </button>
+                    </div>
                 </div>
             </section>
         </main>

@@ -1,10 +1,8 @@
 import { EVENTS } from '../data/events.js';
-import { AIService } from './ai.js';
 
 export class EventSystem {
     constructor(game) {
         this.game = game;
-        this.aiService = new AIService(game);
         this.accumulator = 0;
         this.newsAccumulator = 0;
         this.CHECK_RATE = 60; // Event check every 60s
@@ -18,40 +16,16 @@ export class EventSystem {
             this.tryTriggerEvent();
         }
 
-        this.newsAccumulator++;
-        if (this.newsAccumulator >= this.NEWS_RATE) {
-            this.newsAccumulator = 0;
-            this.updateNews();
-        }
+        // News ticker logic removed or can be replaced with static news later
     }
 
     async updateNews() {
-        // 50% chance to update news
-        if (Math.random() > 0.5) {
-            const headline = await this.aiService.generateNews();
-            if (headline) {
-                this.game.ui.updateNewsTicker(headline);
-            }
-        }
+        // AI News removed
     }
 
     async tryTriggerEvent() {
         // Roll for Event Chance (e.g. 30% per minute to have *something* happen)
         if (Math.random() > 0.3) return;
-
-        // Decision: AI Event or Scripted Event?
-        // Let's give AI a 50% chance if enabled
-        const useAI = Math.random() > 0.5;
-
-        if (useAI) {
-            this.game.ui.showToast("🤖 AI กำลังคิดเหตุการณ์...");
-            const aiEvent = await this.aiService.generateEvent();
-            if (aiEvent) {
-                this.trigger(aiEvent);
-                return;
-            }
-            // If AI fails, fallback to standard logic below
-        }
 
         // Standard Logic
         const validEvents = EVENTS.filter(e => {
