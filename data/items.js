@@ -43,5 +43,32 @@ export const ITEMS = {
         type: 'equipment',
         price: 5000,
         effect: { type: 'passive_stress_mult', value: -0.1 }
+    },
+    'medicine': {
+        id: 'medicine',
+        name: 'ยาแก้ปวด',
+        icon: '💊',
+        desc: 'ฟื้นฟูสุขภาพทันที +30',
+        type: 'consumable',
+        price: 100,
+        effect: { type: 'health', value: 30 }
+    },
+    'vitamin': {
+        id: 'vitamin',
+        name: 'วิตามินรวม',
+        icon: '🧬',
+        desc: 'ฟื้นฟูสุขภาพ +50 และลดความเครียด',
+        type: 'consumable',
+        price: 250,
+        effect: { type: 'health', value: 50, stress: -10 }
+    },
+    'first_aid': {
+        id: 'first_aid',
+        name: 'ชุดปฐมพยาบาล',
+        icon: '🩹',
+        desc: 'ฟื้นฟูสุขภาพ +80 ฉุกเฉิน!',
+        type: 'consumable',
+        price: 500,
+        effect: { type: 'health', value: 80 }
     }
 };

@@ -73,10 +73,7 @@ export class JobSystem {
                 income *= 0.5;
             }
 
-            // Health Penalty: If health < 30, income reduced by 30% (sick)
-            if (this.player.isUnhealthy && this.player.isUnhealthy()) {
-                income *= 0.7;
-            }
+            // Note: ไม่มี health penalty - ได้เงินปกติแม้สุขภาพต่ำ
 
             this.player.addMoney(income);
 

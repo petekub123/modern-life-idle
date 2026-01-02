@@ -46,5 +46,17 @@ export const ACTIVITIES = {
         moneyCost: 500, // Fixed cost, or could be dynamic later
         timeCostSeconds: 2 * 3600,
         cooldown: 0
+    },
+    'hospital': {
+        id: 'hospital',
+        name: 'ไปพบหมอ',
+        icon: '🏥',
+        desc: 'รักษาตัวที่โรงพยาบาล สุขภาพดีขึ้น',
+        energyChange: 20,
+        stressChange: -10,
+        healthChange: 40,
+        moneyCost: 800,
+        timeCostSeconds: 4 * 3600,
+        cooldown: 0
     }
 };

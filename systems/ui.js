@@ -281,12 +281,9 @@ export class UIManager {
             let statusText = "กำลังทำงาน...";
             let penalties = [];
 
-            // Show penalties
+            // Show penalties (stress only, no health penalty)
             if (this.game.player.stress > 80) {
                 penalties.push("🔥 เครียด -50%");
-            }
-            if (this.game.player.isUnhealthy && this.game.player.isUnhealthy()) {
-                penalties.push("🤒 ป่วย -30%");
             }
 
             if (penalties.length > 0) {

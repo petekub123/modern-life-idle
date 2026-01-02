@@ -94,7 +94,43 @@ class Game {
         }
 
         this.player.regenerate(); // Passive regeneration if needed
+
+        // Check for hospitalization (health <= 0)
+        if (this.player.health <= 0 && !this.isHospitalized) {
+            this.forceHospitalization();
+        }
+
         this.ui.updateTags(); // Update slower UI elements
+    }
+
+    forceHospitalization() {
+        this.isHospitalized = true;
+        const hospitalCost = 2000;
+
+        // Stop working
+        this.jobSystem.isWorking = false;
+
+        // Deduct money (can go into debt)
+        this.player.stats.money -= hospitalCost;
+
+        // Advance 1 day (24 hours)
+        this.timeSystem.advanceTime(24 * 3600);
+
+        // Restore health to 60
+        this.player.stats.health = 60;
+        this.player.stats.energy = 100;
+        this.player.stats.stress = 20;
+
+        // Show modal
+        this.ui.showEventModal({
+            title: '🏥 นอนโรงพยาบาล!',
+            desc: 'สุขภาพแย่มากจนต้องเข้าโรงพยาบาล! พักรักษาตัว 1 วัน',
+            effects: { money: -hospitalCost, health: 60 }
+        });
+
+        this.ui.log(`🏥 นอนโรงพยาบาล 1 วัน (-${hospitalCost}฿)`);
+        this.isHospitalized = false;
+        this.saveSystem.save();
     }
 
     processDailyExpenses() {

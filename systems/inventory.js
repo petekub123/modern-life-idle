@@ -51,6 +51,8 @@ export class InventorySystem {
             this.game.player.modifyEnergy(item.effect.value);
         } else if (item.effect.type === 'stress') {
             this.game.player.modifyStress(item.effect.value);
+        } else if (item.effect.type === 'health') {
+            this.game.player.modifyHealth(item.effect.value);
         }
 
         // Side effects
