@@ -96,7 +96,7 @@ export class SkillSystem {
         player.spendMoney(course.moneyCost);
 
         // Add time
-        this.game.timeSystem.addSeconds(course.timeCostSeconds);
+        this.game.timeSystem.advanceTime(course.timeCostSeconds);
 
         // Add skill XP
         this.addSkillXP(course.skillId, course.xpGain);
