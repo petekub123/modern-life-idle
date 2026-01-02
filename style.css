@@ -797,27 +797,31 @@ body {
 }
 
 .location-submenu {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
 
 .submenu-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 10px;
     background: rgba(30, 41, 59, 0.5);
     border: 1px solid var(--panel-border);
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
+    text-align: center;
 }
 
 .submenu-item:hover {
     background: var(--panel-bg);
     border-color: var(--accent);
-    transform: translateX(4px);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
 }
 
 .submenu-item.coming-soon {
@@ -832,7 +836,7 @@ body {
 }
 
 .submenu-item .icon {
-    font-size: 1.5rem;
+    font-size: 2rem;
 }
 
 .submenu-item .name {
@@ -841,12 +845,12 @@ body {
 }
 
 .submenu-item .badge-soon {
-    margin-left: auto;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--warning);
-    background: rgba(251, 191, 36, 0.1);
-    padding: 2px 8px;
-    border-radius: 10px;
+    background: transparent;
+    padding: 0;
+    margin-top: 4px;
+    border-radius: 0;
 }
 
 /* Sub Panels */

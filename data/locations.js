@@ -59,7 +59,7 @@ export const LOCATIONS = {
         status: 'available',
         submenus: [
             { id: 'shopping', name: 'ช้อปปิ้งลดเครียด', icon: '🛍️', action: 'activity', actionId: 'shopping' },
-            { id: 'shop', name: 'ซื้ออุปกรณ์', icon: '🛒', action: 'panel', panel: 'shop' },
+            { id: 'shop', name: 'ร้านสะดวกซื้อ', icon: '🛒', action: 'panel', panel: 'shop' },
             { id: 'furniture', name: 'ร้านเฟอร์นิเจอร์', icon: '🛋️', action: 'panel', panel: 'furniture-shop' },
             { id: 'movie', name: 'ดูหนัง', icon: '🍿', action: 'coming_soon' }
         ]
