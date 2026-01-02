@@ -1,6 +1,7 @@
 import { JOBS } from '../data/jobs.js';
 import { ACTIVITIES } from '../data/activities.js';
 import { ITEMS } from '../data/items.js';
+import { SKILLS, COURSES } from '../data/skills.js';
 
 export class UIManager {
     constructor(game) {
@@ -32,6 +33,8 @@ export class UIManager {
         this.renderActivityList();
         this.renderShop();
         this.renderInventory();
+        this.renderSkills();
+        this.renderCourses();
     }
 
     bindEvents() {
@@ -397,6 +400,61 @@ export class UIManager {
                     this.showToast("พลังงานไม่พอทำงานนี้!", "error");
                 }
             };
+            container.appendChild(btn);
+        });
+    }
+
+    renderSkills() {
+        const container = document.getElementById('skills-summary');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const skills = this.game.skillSystem.getAllSkillsStatus();
+        skills.forEach(skill => {
+            const div = document.createElement('div');
+            div.className = 'skill-item';
+            div.style.cssText = 'display:flex; flex-direction:column; gap:4px; padding:8px; background:rgba(255,255,255,0.03); border-radius:8px;';
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>${skill.icon} ${skill.name}</span>
+                    <span style="color:var(--accent); font-weight:bold;">Lv.${skill.level}${skill.level >= skill.maxLevel ? ' MAX' : ''}</span>
+                </div>
+                <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
+                    <div style="height:100%; width:${skill.progress}%; background:var(--accent); transition:width 0.3s;"></div>
+                </div>
+                <div style="font-size:0.7rem; color:#888;">+${Math.round((SKILLS[skill.id].incomeBonus * skill.level) * 100)}% รายได้</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    renderCourses() {
+        const container = document.getElementById('courses-list');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        Object.values(COURSES).forEach(course => {
+            const skill = SKILLS[course.skillId];
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.innerHTML = `
+                <span class="icon">${course.icon}</span>
+                <span class="name">${course.name}</span>
+                <span class="desc">${skill.icon} +${course.xpGain} XP</span>
+                <span class="desc" style="color:var(--stress)">-${course.moneyCost}฿ -${course.energyCost}⚡</span>
+            `;
+
+            btn.addEventListener('click', () => {
+                this.game.sound?.playClick();
+                const success = this.game.skillSystem.takeCourse(course.id);
+                if (success) {
+                    this.renderSkills(); // Update skill display
+                }
+            });
+
             container.appendChild(btn);
         });
     }

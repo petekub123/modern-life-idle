@@ -63,6 +63,11 @@ export class JobSystem {
                 income *= this.player.game.inventorySystem.getPassiveIncomeMultiplier();
             }
 
+            // Skill Bonuses
+            if (this.player.game && this.player.game.skillSystem) {
+                income *= this.player.game.skillSystem.getSkillIncomeMultiplier();
+            }
+
             // Stress Penalty: If stress > 80, income reduced by 50%
             if (this.player.stress > 80) {
                 income *= 0.5;

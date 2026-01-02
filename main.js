@@ -7,6 +7,7 @@ import { EventSystem } from './systems/event.js';
 import { SaveSystem } from './systems/save.js';
 import { UIManager } from './systems/ui.js';
 import { SoundManager } from './systems/sound.js';
+import { SkillSystem } from './systems/skill.js';
 
 class Game {
     constructor() {
@@ -17,6 +18,7 @@ class Game {
         this.activitySystem = new ActivitySystem(this);
         this.inventorySystem = new InventorySystem(this);
         this.eventSystem = new EventSystem(this);
+        this.skillSystem = new SkillSystem(this);
         this.ui = new UIManager(this);
         this.saveSystem = new SaveSystem(this);
         this.sound = new SoundManager();
@@ -36,6 +38,7 @@ class Game {
             this.timeSystem.load(savedData.time);
             this.jobSystem.load(savedData.job);
             this.inventorySystem.load(savedData.inventory);
+            this.skillSystem.load(savedData.skills);
 
             // Calculate offline progress
             const offlineSeconds = this.timeSystem.getOfflineSeconds();

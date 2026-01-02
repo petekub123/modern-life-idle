@@ -10,6 +10,7 @@ export class SaveSystem {
             time: this.game.timeSystem.toJSON(),
             job: this.game.jobSystem.toJSON(),
             inventory: this.game.inventorySystem.toJSON(),
+            skills: this.game.skillSystem.toJSON(),
             timestamp: Date.now()
         };
         try {
