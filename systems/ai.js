@@ -10,6 +10,25 @@ import {
 export class AIService {
     constructor(game) {
         this.game = game;
+
+        // Rate limiting - prevent 429 errors
+        this.lastCallTime = 0;
+        this.MIN_CALL_INTERVAL = 5000; // 5 seconds between calls
+        this.isRateLimited = false;
+    }
+
+    // Check if we can make an API call
+    canMakeCall() {
+        const now = Date.now();
+        const timeSinceLast = now - this.lastCallTime;
+        return timeSinceLast >= this.MIN_CALL_INTERVAL;
+    }
+
+    // Get remaining cooldown time
+    getCooldownRemaining() {
+        const now = Date.now();
+        const remaining = this.MIN_CALL_INTERVAL - (now - this.lastCallTime);
+        return Math.max(0, Math.ceil(remaining / 1000));
     }
 
     // Helper to get player status object
@@ -33,12 +52,23 @@ export class AIService {
         };
     }
 
-    // Generic API call helper
+    // Generic API call helper with rate limiting
     async callGemini(prompt, parseAsArray = false) {
         if (!CONFIG.AI_API_KEY) {
             console.warn("No API Key found for AI Service");
             return null;
         }
+
+        // Rate limit check
+        if (!this.canMakeCall()) {
+            const remaining = this.getCooldownRemaining();
+            console.warn(`Rate limited. Wait ${remaining}s`);
+            this.game.ui?.showToast(`⏳ รอ ${remaining} วินาที`);
+            return null;
+        }
+
+        // Update last call time
+        this.lastCallTime = Date.now();
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.AI_MODEL}:generateContent?key=${CONFIG.AI_API_KEY}`;
 
@@ -54,6 +84,11 @@ export class AIService {
                     }
                 })
             });
+
+            if (response.status === 429) {
+                this.game.ui?.showToast("⏳ API เรียกบ่อยไป รอสักครู่นะ");
+                return null;
+            }
 
             if (!response.ok) {
                 console.error("API Error:", response.status);
