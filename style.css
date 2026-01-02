@@ -963,3 +963,20 @@ body {
 .stock-btn.sell:hover {
     background: rgba(251, 191, 36, 0.4);
 }
+
+/* Quick Inventory Items */
+.quick-item-btn {
+    padding: 6px 10px;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-item-btn:hover {
+    background: rgba(56, 189, 248, 0.3);
+    transform: scale(1.05);
+}

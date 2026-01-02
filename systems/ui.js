@@ -92,6 +92,57 @@ export class UIManager {
                 document.getElementById('friend-modal').classList.add('hidden');
             });
         }
+
+        // Quick Bag Button
+        const quickBagBtn = document.getElementById('btn-quick-bag');
+        if (quickBagBtn) {
+            quickBagBtn.addEventListener('click', () => {
+                this.game.sound?.playClick();
+                this.toggleQuickInventory();
+            });
+        }
+    }
+
+    toggleQuickInventory() {
+        const quickItems = document.getElementById('quick-items');
+        if (!quickItems) return;
+
+        if (quickItems.style.display === 'none') {
+            quickItems.style.display = 'flex';
+            this.renderQuickInventory();
+        } else {
+            quickItems.style.display = 'none';
+        }
+    }
+
+    renderQuickInventory() {
+        const quickItems = document.getElementById('quick-items');
+        if (!quickItems) return;
+
+        const inventory = this.game.inventorySystem.items;
+        quickItems.innerHTML = '';
+
+        if (Object.keys(inventory).length === 0) {
+            quickItems.innerHTML = '<span style="color:#888; font-size:0.8rem;">กระเป๋าว่าง</span>';
+            return;
+        }
+
+        Object.entries(inventory).forEach(([itemId, qty]) => {
+            const item = ITEMS[itemId];
+            if (!item || qty <= 0) return;
+
+            const btn = document.createElement('button');
+            btn.className = 'quick-item-btn';
+            btn.innerHTML = `${item.icon} ${qty}`;
+            btn.title = `${item.name} - ${item.desc}`;
+            btn.addEventListener('click', () => {
+                this.game.sound?.playClick();
+                this.game.inventorySystem.useItem(itemId);
+                this.renderQuickInventory();
+                this.renderInventory();
+            });
+            quickItems.appendChild(btn);
+        });
     }
 
     renderShop() {
