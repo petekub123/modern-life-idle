@@ -20,6 +20,10 @@ export class JobSystem {
     }
 
     get currentJob() {
+        if (!JOBS[this.currentJobId]) {
+            console.warn(`Invalid job ID '${this.currentJobId}' found. Resetting to 'unemployed'.`);
+            this.currentJobId = 'unemployed';
+        }
         return JOBS[this.currentJobId];
     }
 
@@ -122,6 +126,13 @@ export class JobSystem {
         this.currentJobId = targetJobId;
         this.isWorking = false;
         this.player.game.ui.showToast(`ย้ายสายงานไปเป็น ${job.name} แล้ว!`);
+        return true;
+    }
+
+    startWork() {
+        if (!this.currentJobId || this.currentJobId === 'unemployed') return false;
+        if (this.player.energy <= 0) return false;
+        this.isWorking = true;
         return true;
     }
 

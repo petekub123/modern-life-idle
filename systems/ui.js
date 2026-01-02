@@ -377,6 +377,7 @@ export class UIManager {
                 card.className = 'job-item-btn';
                 card.style.display = 'block';
                 card.style.opacity = check.can ? '1' : '0.7';
+                card.style.transition = 'all 0.2s ease';
 
                 card.innerHTML = `
                 <div style="font-weight:bold; margin-bottom:5px;">
@@ -385,22 +386,32 @@ export class UIManager {
                 <div style="font-size:0.8rem; color:#aaa;">${job.desc}</div>
                 <div style="font-size:0.8rem; color:var(--success); margin-top:5px;">รายได้: ${job.incomePerSec}฿/วิ</div>
                 ${!check.can ? `<div style="font-size:0.75rem; color:#e94560;">ติดเงื่อนไข: ${check.reasons[0]}</div>` : ''}
+                ${check.can ? `<div style="margin-top:8px; font-size:0.75rem; color:var(--accent); text-align:right; font-weight:600;">คลิกเพื่อสมัคร ➜</div>` : ''}
             `;
 
                 if (check.can) {
-                    const btn = document.createElement('button');
-                    btn.innerText = 'ย้ายสาย';
-                    btn.className = 'buy-btn';
-                    btn.style.width = '100%';
-                    btn.style.marginTop = '8px';
-                    btn.style.fontSize = '0.8rem';
-                    btn.onclick = () => {
-                        if (confirm(`ย้ายไปสาย ${job.name}?\n⚠️ ตำแหน่งปัจจุบันจะถูกรีเซ็ต!`)) {
+                    card.style.cursor = 'pointer';
+                    card.style.border = '1px solid rgba(78, 204, 163, 0.3)';
+
+                    card.onmouseover = () => {
+                        card.style.background = 'rgba(78, 204, 163, 0.1)';
+                        card.style.transform = 'translateY(-2px)';
+                    };
+                    card.onmouseout = () => {
+                        card.style.background = '';
+                        card.style.transform = 'translateY(0)';
+                    };
+
+                    card.onclick = () => {
+                        this.game.sound?.playClick();
+                        // Check if currently unemployed to skip confirm maybe? Or just keep it safe
+                        const isUnemployed = !this.game.jobSystem.currentJob || this.game.jobSystem.currentJob.id === 'unemployed';
+
+                        if (isUnemployed || confirm(`ย้ายไปสาย ${job.name}?\n⚠️ ตำแหน่งปัจจุบันจะถูกรีเซ็ต!`)) {
                             this.game.jobSystem.switchJob(job.id);
                             this.renderCareerHub();
                         }
                     };
-                    card.appendChild(btn);
                 }
 
                 grid.appendChild(card);
@@ -464,8 +475,13 @@ export class UIManager {
             this.els.workStatus.textContent = statusText;
         } else {
             if (currentJob.id !== 'unemployed') {
-                this.els.workStatus.textContent = "หยุดทำงาน (พลังงานหมด!)";
-                this.els.workStatus.style.color = "#e94560";
+                if (this.game.player.energy <= 0) {
+                    this.els.workStatus.textContent = "หยุดทำงาน (พลังงานหมด!)";
+                    this.els.workStatus.style.color = "#e94560";
+                } else {
+                    this.els.workStatus.textContent = "ไม่ได้ทำงาน";
+                    this.els.workStatus.style.color = "#aaa";
+                }
             } else {
                 this.els.workStatus.textContent = "ไม่ได้ทำงาน";
                 this.els.workStatus.style.color = "#a0a0b0";
@@ -1207,7 +1223,7 @@ export class UIManager {
         }
 
         if (this.game.jobSystem.startWork()) {
-            this.showToast(`💼 เริ่มทำงาน: ${this.game.jobSystem.currentJob.title}`);
+            this.showToast(`💼 เริ่มทำงาน: ${this.game.jobSystem.currentJob.name}`);
         }
     }
 
